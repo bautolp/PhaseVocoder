@@ -1,0 +1,9 @@
+﻿  AudioProcessor.cpp
+  SignalProcessor.cpp
+  SignalProcessorFactory.cpp
+     Creating library C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.lib and object C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.exp
+  Generating code
+  All 252 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  SignalProcessor.vcxproj -> C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.dll
+  SignalProcessor.vcxproj -> C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.pdb (Full PDB)
