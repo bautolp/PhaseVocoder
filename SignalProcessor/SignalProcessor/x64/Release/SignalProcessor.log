@@ -1,9 +1,29 @@
-﻿  AudioProcessor.cpp
+﻿  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\..\fftw\fftw3.h
+  1 File(s) copied
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\..\fftw\libfftw3-3.dll
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\..\fftw\libfftw3f-3.dll
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\..\fftw\libfftw3l-3.dll
+  3 File(s) copied
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\..\fftw\libfftw3-3.lib
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\..\fftw\libfftw3f-3.lib
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\..\fftw\libfftw3l-3.lib
+  3 File(s) copied
+  AudioProcessor.cpp
   SignalProcessor.cpp
   SignalProcessorFactory.cpp
-     Creating library C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.lib and object C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.exp
+     Creating library C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\SignalProcessor.lib and object C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\SignalProcessor.exp
   Generating code
   All 252 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
-  SignalProcessor.vcxproj -> C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.dll
-  SignalProcessor.vcxproj -> C:\school\ECE484Project\SignalProcessor\bin64\SignalProcessor.pdb (Full PDB)
+  SignalProcessor.vcxproj -> C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\SignalProcessor.dll
+  SignalProcessor.vcxproj -> C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\SignalProcessor.pdb (Full PDB)
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\SignalProcessor\SignalProcessor.h
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\SignalProcessor\SignalProcessorFactory.h
+  2 File(s) copied
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\libfftw3-3.dll
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\libfftw3f-3.dll
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\libfftw3l-3.dll
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\SignalProcessor.dll
+  4 File(s) copied
+  C:\Users\lyndo\OneDrive\Documents\GitHub\PhaseVocoder\SignalProcessor\bin64\SignalProcessor.lib
+  1 File(s) copied
