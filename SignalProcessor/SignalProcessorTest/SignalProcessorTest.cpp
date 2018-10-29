@@ -10,7 +10,7 @@
 #include <stdlib.h>
 // clang-format on
 
-#define N 8
+#define N 16
 
 int main() {
     // Generate cosine
@@ -18,7 +18,7 @@ int main() {
 
     for (int i = 0; i < N; i++) 
     {
-        in[i][0] = cos((8 * 2 * M_PI*i) / N);
+        in[i][0] = cos((2 * 2 * M_PI*i) / N);
         std::cout << "in " << in[i][0] << std::endl;
         in[i][1] = 0;
     }

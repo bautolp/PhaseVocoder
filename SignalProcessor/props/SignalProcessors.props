@@ -4,19 +4,19 @@
    <PropertyGroup Label="UserMacros" />
    <ItemDefinitionGroup>
       <ClCompile>
-         <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+         <AdditionalIncludeDirectories>$(SolutionDir)output\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       </ClCompile>
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Release|x64'">
       <Link>
          <AdditionalDependencies>SignalProcessor.lib;%(AdditionalDependencies)</AdditionalDependencies>
-         <AdditionalLibraryDirectories>$(SolutionDir)libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+         <AdditionalLibraryDirectories>$(SolutionDir)output\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       </Link>
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Debug|x64'">
       <Link>
          <AdditionalDependencies>SignalProcessor_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-         <AdditionalLibraryDirectories>$(SolutionDir)libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+         <AdditionalLibraryDirectories>$(SolutionDir)output\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       </Link>
    </ItemDefinitionGroup>
    <ItemGroup />

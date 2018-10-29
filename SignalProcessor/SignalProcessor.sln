@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SignalProcessor", "SignalProcessor\SignalProcessor.vcxproj", "{820A28E7-7B5B-4D75-A84D-168D9BCD5B6E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SignalProcessorTest", "SignalProcessorTest\SignalProcessorTest.vcxproj", "{3685D52F-D428-4330-85D3-33A17AFA4282}"
+	ProjectSection(ProjectDependencies) = postProject
+		{820A28E7-7B5B-4D75-A84D-168D9BCD5B6E} = {820A28E7-7B5B-4D75-A84D-168D9BCD5B6E}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
