@@ -1,0 +1,16 @@
+*.suo 
+*.pdb
+*.exe
+*.ilk
+*.log
+*.pch
+*.obj
+*.tlog
+*.ipch
+*.idb
+*.dll
+*.db
+*.opendb
+*.avi
+*.png
+*.mp4
