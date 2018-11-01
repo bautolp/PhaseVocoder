@@ -14,3 +14,7 @@
 *.avi
 *.png
 *.mp4
+*.exp
+*.iobj
+*.ipdb
+*.lib
