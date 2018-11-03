@@ -4,19 +4,19 @@
    <PropertyGroup Label="UserMacros" />
    <ItemDefinitionGroup>
       <ClCompile>
-         <AdditionalIncludeDirectories>$(SolutionDir)..\fftw\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+         <AdditionalIncludeDirectories>$(SolutionDir)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       </ClCompile>
    </ItemDefinitionGroup>
-   <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Release|x64'">
+   <ItemDefinitionGroup Condition="'$(PlatformTarget)' == 'x64'">
       <Link>
          <AdditionalDependencies>libfftw3-3.lib;libfftw3f-3.lib;libfftw3l-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-         <AdditionalLibraryDirectories>$(SolutionDir)..\fftw\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+         <AdditionalLibraryDirectories>$(SolutionDir)lib64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       </Link>
    </ItemDefinitionGroup>
-   <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Debug|x64'">
+   <ItemDefinitionGroup Condition="'$(PlatformTarget)' == 'x86'">
       <Link>
          <AdditionalDependencies>libfftw3-3.lib;libfftw3f-3.lib;libfftw3l-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-         <AdditionalLibraryDirectories>$(SolutionDir)..\fftw\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+         <AdditionalLibraryDirectories>$(SolutionDir)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       </Link>
    </ItemDefinitionGroup>
    <ItemGroup />

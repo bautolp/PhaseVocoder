@@ -57,35 +57,35 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\props\FTW++.props" />
+    <Import Project="..\props\FFTW.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\props\FTW++.props" />
+    <Import Project="..\props\FFTW.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\props\FTW++.props" />
+    <Import Project="..\props\FFTW.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\props\FTW++.props" />
+    <Import Project="..\props\FFTW.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)bin64\</OutDir>
-    <TargetName>$(ProjectName)d</TargetName>
+    <TargetName>$(ProjectName)_d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)bin64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)bin\</OutDir>
-    <TargetName>$(ProjectName)_x86</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)bin\</OutDir>
-    <TargetName>$(ProjectName)d_x86</TargetName>
+    <TargetName>$(ProjectName)_d</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -94,6 +94,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDLL;SIGNALPROCESSOR_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <PreBuildEvent>
+      <Command>xcopy "$(SolutionDir)..\fftw\include\*.h" "$(SolutionDir)include\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib\*.dll" "$(SolutionDir)bin\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib\*.lib" "$(SolutionDir)lib\" /C /Y /I</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)SignalProcessor*.h" "$(SolutionDir)output\include\" /C /Y /I
+xcopy "$(SolutionDir)bin\*.dll" "$(SolutionDir)output\lib\" /C /Y /I
+xcopy "$(SolutionDir)bin\*.lib" "$(SolutionDir)output\lib\" /C /Y /I</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -101,16 +111,17 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDLL;SIGNALPROCESSOR_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\fftw\64-bit\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
-      <Command>xcopy "$(SolutionDir)..\fftw\*.h" "$(SolutionDir)include\" /C /Y /I
-xcopy "$(SolutionDir)..\fftw\*.dll" "$(SolutionDir)bin64\" /C /Y /I
-xcopy "$(SolutionDir)..\fftw\*.lib" "$(SolutionDir)libs\" /C /Y /I</Command>
+      <Command>xcopy "$(SolutionDir)..\fftw\include\*.h" "$(SolutionDir)include\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib64\*.dll" "$(SolutionDir)bin64\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib64\*.lib" "$(SolutionDir)lib64\" /C /Y /I</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)SignalProcessor*.h" "$(SolutionDir)output\include\" /C /Y /I
-xcopy "$(SolutionDir)bin64\*.dll" "$(SolutionDir)output\lib\" /C /Y /I
-xcopy "$(SolutionDir)bin64\*.lib" "$(SolutionDir)output\lib\" /C /Y /I</Command>
+xcopy "$(SolutionDir)bin64\*.dll" "$(SolutionDir)output\lib64\" /C /Y /I
+xcopy "$(SolutionDir)bin64\*.lib" "$(SolutionDir)output\lib64\" /C /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -126,6 +137,16 @@ xcopy "$(SolutionDir)bin64\*.lib" "$(SolutionDir)output\lib\" /C /Y /I</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy "$(SolutionDir)..\fftw\include\*.h" "$(SolutionDir)include\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib\*.dll" "$(SolutionDir)bin\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib\*.lib" "$(SolutionDir)lib\" /C /Y /I</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)SignalProcessor*.h" "$(SolutionDir)output\include\" /C /Y /I
+xcopy "$(SolutionDir)bin\*.dll" "$(SolutionDir)output\lib\" /C /Y /I
+xcopy "$(SolutionDir)bin\*.lib" "$(SolutionDir)output\lib\" /C /Y /I</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -135,20 +156,21 @@ xcopy "$(SolutionDir)bin64\*.lib" "$(SolutionDir)output\lib\" /C /Y /I</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDLL;SIGNALPROCESSOR_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\fftw\64-bit\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy "$(SolutionDir)..\fftw\*.h" "$(SolutionDir)include\" /C /Y /I
-xcopy "$(SolutionDir)..\fftw\*.dll" "$(SolutionDir)bin64\" /C /Y /I
-xcopy "$(SolutionDir)..\fftw\*.lib" "$(SolutionDir)libs\" /C /Y /I</Command>
+      <Command>xcopy "$(SolutionDir)..\fftw\include\*.h" "$(SolutionDir)include\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib64\*.dll" "$(SolutionDir)bin64\" /C /Y /I
+xcopy "$(SolutionDir)..\fftw\lib64\*.lib" "$(SolutionDir)lib64\" /C /Y /I</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)SignalProcessor*.h" "$(SolutionDir)output\include\" /C /Y /I
-xcopy "$(SolutionDir)bin64\*.dll" "$(SolutionDir)output\lib\" /C /Y /I
-xcopy "$(SolutionDir)bin64\*.lib" "$(SolutionDir)output\lib\" /C /Y /I</Command>
+xcopy "$(SolutionDir)bin64\*.dll" "$(SolutionDir)output\lib64\" /C /Y /I
+xcopy "$(SolutionDir)bin64\*.lib" "$(SolutionDir)output\lib64\" /C /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

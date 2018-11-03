@@ -10,7 +10,7 @@
 #include <stdlib.h>
 // clang-format on
 
-#define N 16
+#define N 4096
 
 int main() {
     // Generate cosine
@@ -18,8 +18,8 @@ int main() {
 
     for (int i = 0; i < N; i++) 
     {
-        in[i][0] = cos((2 * 2 * M_PI*i) / N);
-        std::cout << "in " << in[i][0] << std::endl;
+        in[i][0] = cos((16.5  * 2 * M_PI*i) / N);
+        //std::cout << "in " << in[i][0] << std::endl;
         in[i][1] = 0;
     }
 
@@ -32,19 +32,21 @@ int main() {
     
     for (int i = 0; i < N; i++)
     {
-        std::cout << "freq " << i << ": " << fft[i][0] << ", " << fft[i][1] << std::endl;
+        if(fft[i][0] > 1)
+            std::cout << "freq " << i << ": " << fft[i][0] << ", " << fft[i][1] << std::endl;
     }
 
     // Normalize
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) 
+    {
         inverse_fft[i][0] *= 1. / N;
         inverse_fft[i][1] *= 1. / N;
     }
 
     for (int i = 0; i < N; i++)
     {
-        std::cout << "Initial " << i << ": " << in[i][0] << ", " << in[i][1] << std::endl;
-        std::cout << "inverse " << i << ": " << inverse_fft[i][0] << ", " << inverse_fft[i][1] << std::endl;
+        //std::cout << "Initial " << i << ": " << in[i][0] << ", " << in[i][1] << std::endl;
+        //std::cout << "inverse " << i << ": " << inverse_fft[i][0] << ", " << inverse_fft[i][1] << std::endl;
     }
 
     // Release memory 

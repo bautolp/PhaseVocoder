@@ -4,19 +4,31 @@
    <PropertyGroup Label="UserMacros" />
    <ItemDefinitionGroup>
       <ClCompile>
-         <AdditionalIncludeDirectories>$(SolutionDir)output\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+         <AdditionalIncludeDirectories>$(SolutionDir)output\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       </ClCompile>
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Release|x64'">
       <Link>
          <AdditionalDependencies>SignalProcessor.lib;%(AdditionalDependencies)</AdditionalDependencies>
-         <AdditionalLibraryDirectories>$(SolutionDir)output\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+         <AdditionalLibraryDirectories>$(SolutionDir)output\lib64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       </Link>
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Debug|x64'">
       <Link>
          <AdditionalDependencies>SignalProcessor_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-         <AdditionalLibraryDirectories>$(SolutionDir)output\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+         <AdditionalLibraryDirectories>$(SolutionDir)output\lib64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      </Link>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Release|x86'">
+      <Link>
+         <AdditionalDependencies>SignalProcessor.lib;%(AdditionalDependencies)</AdditionalDependencies>
+         <AdditionalLibraryDirectories>$(SolutionDir)output\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      </Link>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(PlatformTarget)' == 'Debug|x86'">
+      <Link>
+         <AdditionalDependencies>SignalProcessor_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+         <AdditionalLibraryDirectories>$(SolutionDir)output\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       </Link>
    </ItemDefinitionGroup>
    <ItemGroup />
