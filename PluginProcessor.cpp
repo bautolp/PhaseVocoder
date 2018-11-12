@@ -21,13 +21,21 @@ PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
 #endif
         .withOutput("Output", AudioChannelSet::stereo(), true)
 #endif
-    ), forward_fft(13), inverse_fft(13), lowpass(dsp::IIR::Coefficients<float>::makeLowPass(44100, 800.0f, 0.1f))
+    ), lowpass(dsp::IIR::Coefficients<float>::makeLowPass(44100, 800.0f, 0.1f)), phase_vocoder(NULL)
 #endif
 {
+    WindowFunctionType window_type = WindowFunctionType::Hanning;
+
+    phase_vocoder = new PhaseVocoder(window_type);
 }
 
 PhaseVocoderPluginAudioProcessor::~PhaseVocoderPluginAudioProcessor()
 {
+    if (phase_vocoder)
+    {
+        delete phase_vocoder;
+        phase_vocoder = NULL;
+    }
 }
 
 //==============================================================================
@@ -81,15 +89,19 @@ int PhaseVocoderPluginAudioProcessor::getCurrentProgram()
 
 void PhaseVocoderPluginAudioProcessor::setCurrentProgram (int index)
 {
+    (void)index;
 }
 
 const String PhaseVocoderPluginAudioProcessor::getProgramName (int index)
 {
+    (void)index;
     return {};
 }
 
 void PhaseVocoderPluginAudioProcessor::changeProgramName (int index, const String& newName)
 {
+    (void)index;
+    (void)newName;
 }
 
 //==============================================================================
@@ -97,12 +109,12 @@ void PhaseVocoderPluginAudioProcessor::prepareToPlay (double sampleRate, int sam
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    /*dsp::ProcessSpec spec;
+    dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
     lowpass.prepare(spec);
-    lowpass.reset();*/
+    lowpass.reset();
 
 }
 
@@ -110,6 +122,7 @@ void PhaseVocoderPluginAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    phase_vocoder->Finish();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -143,6 +156,7 @@ void PhaseVocoderPluginAudioProcessor::update_parameters()
 
 void PhaseVocoderPluginAudioProcessor::dsp_process(dsp::ProcessContextReplacing<float> context)
 {
+    (void)context;
     // do processing here 
 }
 
@@ -156,29 +170,15 @@ void PhaseVocoderPluginAudioProcessor::update_filter()
 
 void PhaseVocoderPluginAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
+    (void)midiMessages;
     ScopedNoDenormals noDenormals;
 
-    const int totalNumInputChannels = getTotalNumInputChannels();
-    const int totalNumOutputChannels = getTotalNumOutputChannels();
-
-    for (int channel = totalNumInputChannels; channel < totalNumOutputChannels; ++channel)
-        buffer.clear(channel, 0, buffer.getNumSamples());
-
-    dsp::AudioBlock<float> block(buffer);
-    //dsp_process(dsp::ProcessContextReplacing<float>(block));
-    update_filter();
-    lowpass.process(dsp::ProcessContextReplacing<float>(block));
-    /*
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
-        float* OutputData = buffer.getWritePointer(channel);
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-        {
-            OutputData[sample] = buffer.getSample(channel, sample) * 0.25;
-        }
+        float * output = buffer.getWritePointer(channel);
+        //phase_vocoder->DSPOffline(output, output, buffer.getNumSamples(), channel);
+        phase_vocoder->DSPOnline(output, output, buffer.getNumSamples(), channel);
     }
-    */
-    
 }
 
 //==============================================================================
@@ -195,6 +195,7 @@ AudioProcessorEditor* PhaseVocoderPluginAudioProcessor::createEditor()
 //==============================================================================
 void PhaseVocoderPluginAudioProcessor::getStateInformation (MemoryBlock& destData)
 {
+    (void)destData;
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
@@ -202,6 +203,8 @@ void PhaseVocoderPluginAudioProcessor::getStateInformation (MemoryBlock& destDat
 
 void PhaseVocoderPluginAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
+    (void)sizeInBytes;
+    (void)data;
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
