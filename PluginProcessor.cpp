@@ -26,7 +26,7 @@ PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
 {
     WindowFunctionType window_type = WindowFunctionType::Hanning;
 
-    phase_vocoder = new PhaseVocoder(window_type);
+    phase_vocoder = new PhaseVocoder();
 }
 
 PhaseVocoderPluginAudioProcessor::~PhaseVocoderPluginAudioProcessor()
@@ -177,7 +177,7 @@ void PhaseVocoderPluginAudioProcessor::processBlock (AudioBuffer<float>& buffer,
     {
         float * output = buffer.getWritePointer(channel);
         //phase_vocoder->DSPOffline(output, output, buffer.getNumSamples(), channel);
-        phase_vocoder->DSPOnline(output, output, buffer.getNumSamples(), channel);
+        phase_vocoder->DSP(output, output, buffer.getNumSamples(), channel);
     }
 }
 
