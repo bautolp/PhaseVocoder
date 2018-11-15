@@ -25,12 +25,11 @@ enum ProcessType
     Whisperization
 };
 
-#define DEFAULT_BUFFER_SIZE 1024 * 1024 // 1000,000 samples * 4 byte/sample = 4 MB should be much more than required for any audio
 #define FFT_ORDER 9
 #define FFT_SIZE (1 << FFT_ORDER)
 #define SEGMENT_SIZE 256
-#define WINDOW_SIZE 128
-#define HOP_SIZE 64
+#define WINDOW_SIZE 512
+#define HOP_SIZE 256
 #define SCALING_FACTOR ((FFT_SIZE / WINDOW_SIZE) * (WINDOW_SIZE / (HOP_SIZE*2)))
 
 #define INTERM_BUFFER_SIZE 8192
@@ -43,6 +42,9 @@ public:
     ~PhaseVocoder();
     void DSP(float* input, float* output, uint32_t buff_size, uint32_t channel);
     void Finish();
+	static float m_effect;
+	static void changeEffect(const float newValue);
+
 private:
 
     // Allocate output buffer and tmp buffer
@@ -64,6 +66,7 @@ private:
     void ApplyProcessing(dsp::Complex<float>* input, dsp::Complex<float>* intermed_fw, dsp::Complex<float>* intermed_rv, dsp::Complex<float>* output, uint32_t count, uint32_t window_start);
     void ApplyWindowFunction(dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t count, uint32_t window_start);
     void GenerateWindowFunction();
+	void ApplyCircularShift(const dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t segment_size);
 
     void Process(dsp::Complex<float> * fft_data, uint32_t fft_size, ProcessType type);
     void PhaseLock();

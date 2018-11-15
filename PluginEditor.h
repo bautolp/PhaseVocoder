@@ -16,7 +16,7 @@ It contains the basic framework code for a JUCE plugin editor.
 //==============================================================================
 /**
 */
-class PhaseVocoderPluginAudioProcessorEditor : public AudioProcessorEditor
+class PhaseVocoderPluginAudioProcessorEditor : public AudioProcessorEditor, public Slider::Listener
 {
 public:
 	PhaseVocoderPluginAudioProcessorEditor(PhaseVocoderPluginAudioProcessor&);
@@ -26,7 +26,8 @@ public:
 	void paint(Graphics&) override;
 	void resized() override;
 	void log(Graphics&, std::string);
-
+	void sliderValueChanged(Slider *slider) override;
+	ScopedPointer <AudioProcessorValueTreeState::SliderAttachment> sliderAttach;
 
 private:
 
@@ -40,6 +41,6 @@ private:
 	Image m_background_image;
 
 	PhaseVocoderPluginAudioProcessor& processor;
-
+	Slider phaseSlider;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PhaseVocoderPluginAudioProcessorEditor)
 };

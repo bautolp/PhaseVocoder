@@ -19,6 +19,17 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
 	m_background_image = ImageCache::getFromMemory(Images::background_jpg, Images::background_jpgSize);
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
+	//slider initialization
+	sliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.treeState, "Robotization_Phase", phaseSlider);
+	phaseSlider.setSliderStyle(Slider::SliderStyle::Rotary);
+	phaseSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
+	phaseSlider.setRange(0.0f, 1.0f);
+	phaseSlider.setValue(PhaseVocoder::m_effect);
+	phaseSlider.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
+	phaseSlider.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(100, 0, 125));
+	phaseSlider.addListener(this);
+	addAndMakeVisible(phaseSlider);
+
 	setSize(m_width, m_hieght);
 }
 
@@ -49,4 +60,15 @@ void PhaseVocoderPluginAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+	phaseSlider.setBounds(juce::Rectangle<int>(100, 100, 150, 150));
 }
+
+	void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
+	{
+		/*This is where the slider changes the variable*/
+		if (slider == &phaseSlider) {
+			//std::cout << phaseSlider.getValue() << std::endl;
+			PhaseVocoder::changeEffect(phaseSlider.getValue());
+		}
+
+	}

@@ -41,6 +41,12 @@ void PhaseVocoder::ApplyWindowFunction(dsp::Complex<float>* input, dsp::Complex<
     }
 }
 
+void PhaseVocoder::ApplyCircularShift(const dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t segment_size)
+{
+	memcpy(output, input + segment_size / 2, sizeof(dsp::Complex<float>)*segment_size / 2);
+	memcpy(output + segment_size / 2, input, sizeof(dsp::Complex<float>)*segment_size / 2);
+}
+
 void PhaseVocoder::PhaseLock()
 {
 
@@ -51,7 +57,7 @@ void PhaseVocoder::WriteWindow(dsp::Complex<float>* input, dsp::Complex<float>* 
     for (uint32_t window_pos = 0; window_pos < count; window_pos++)
     {
         output[window_pos] += dsp::Complex<float>(  input[window_pos].real(),
-                                                    input[window_pos].imag());
+                                                    input[window_pos].imag())*m_effect;
     }
 }
 
@@ -99,22 +105,40 @@ void PhaseVocoder::Whisperization(dsp::Complex<float> * fft_data, uint32_t fft_s
 {
 
 }
+
+void PhaseVocoder::changeEffect(const float newValue)
+{
+	m_effect = newValue;
+}
+
 void PhaseVocoder::Robotization(dsp::Complex<float> * fft_data, uint32_t fft_size)
 {
 
+	for (uint16_t i = 0; i < fft_size; i++) {
+		float magnitude = abs(fft_data[i]);
+		fft_data[i].imag(0.0f);
+		fft_data[i].real(magnitude/**cosf((2 * M_PI)*m_robotization_phase)*/);
+	}
 }
 
 void PhaseVocoder::ProcessSegment(dsp::Complex<float>* input_buffer, dsp::Complex<float> * output_buffer, uint32_t segment_size)
 {
     // Too small
-    if (segment_size < m_window_size)
-    {
-        for (uint32_t i = 0; i < segment_size; i++)
-        {
-            output_buffer[i] = input_buffer[i];
-        }
-        return;
-    }
+	if (segment_size <= m_window_size)
+	{
+		if (segment_size <= m_window_size / 2)
+		{
+			ApplyProcessing(input_buffer, m_complex_intermed_fw, m_complex_intermed_rv, output_buffer, segment_size, 0);
+			ApplyProcessing(input_buffer, m_complex_intermed_fw, m_complex_intermed_rv, output_buffer, segment_size, m_window_size / 2);
+		}
+		else
+		{
+			ApplyProcessing(input_buffer, m_complex_intermed_fw, m_complex_intermed_rv, output_buffer, segment_size, 0);
+			ApplyProcessing(input_buffer, m_complex_intermed_fw, m_complex_intermed_rv, output_buffer, m_window_size / 2, m_window_size / 2);
+			ApplyProcessing(input_buffer, m_complex_intermed_fw, m_complex_intermed_rv, output_buffer, segment_size - m_window_size / 2, 0);
+		}
+		return;
+	}
 
     for (uint32_t i = m_hop_size; i < m_window_size; i += m_hop_size)
     {
@@ -137,15 +161,17 @@ void PhaseVocoder::ApplyProcessing(dsp::Complex<float>* input,
 {
     float scaling_factor = (float)SCALING_FACTOR / 4;
     dsp::Complex<float> buff[FFT_SIZE];
+	dsp::Complex<float> shift_buff[FFT_SIZE];
 
     ApplyWindowFunction(input, buff, count, window_start);
+	ApplyCircularShift(buff, shift_buff, count);
 
     for (uint32_t i = count; i < FFT_SIZE; i++)
     {
-        buff[i] = dsp::Complex<float>(0.0f, 0.0f);
+		shift_buff[i] = dsp::Complex<float>(0.0f, 0.0f);
     }
 
-    m_forward_fft.perform(buff, intermed_fw, false);
+    m_forward_fft.perform(shift_buff, intermed_fw, false);
 
     if ((int)scaling_factor != 1)
     {
@@ -156,18 +182,18 @@ void PhaseVocoder::ApplyProcessing(dsp::Complex<float>* input,
         }
     }
 
-    Process(intermed_fw, FFT_SIZE, ProcessType::PitchShift);
+    Process(intermed_fw, FFT_SIZE, ProcessType::Robotization);
 
     // Perform Phase locking (currently does nothing)
     PhaseLock();
 
     // Inverse FFT
     m_reverse_fft.perform(intermed_fw, intermed_rv, true);
-
+	ApplyCircularShift(intermed_rv, shift_buff, count);
 
     // Scale buffer back
     //ReScaleWindow(intermed, count, (float)FFT_SIZE);
 
     // Commit data to output buffer, since it is windowed we can just add
-    WriteWindow(intermed_rv, output, count);
+    WriteWindow(shift_buff, output, count);
 }

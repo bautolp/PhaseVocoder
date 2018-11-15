@@ -10,6 +10,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+float PhaseVocoder::m_effect;
 
 //==============================================================================
 PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
@@ -21,9 +22,13 @@ PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
 #endif
         .withOutput("Output", AudioChannelSet::stereo(), true)
 #endif
-    ), lowpass(dsp::IIR::Coefficients<float>::makeLowPass(44100, 800.0f, 0.1f)), phase_vocoder(NULL)
+	), treeState(*this, nullptr)
 #endif
 {
+
+	NormalisableRange<float> effectRange(0.0f, 1.0f);
+	treeState.createAndAddParameter("Robotization_Phase", "Robotization_Phase", "Robotization_Phase", effectRange, 1.0f, nullptr, nullptr);
+
     WindowFunctionType window_type = WindowFunctionType::Hanning;
 
     phase_vocoder = new PhaseVocoder();
