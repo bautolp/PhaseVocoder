@@ -67,12 +67,13 @@ private:
     void ApplyCircularShift(const float* input, float* output, uint32_t segment_size);
 	void ApplyCircularShift(const dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t segment_size);
 
-    void Process(dsp::Complex<float> * fft_data, uint32_t fft_size, ProcessType type);
+    void Process(dsp::Complex<float> * time_domain_input, dsp::Complex<float> * frequency_domain, dsp::Complex<float> * time_domain_output, uint32_t fft_size, ProcessType type);
     void PhaseLock();
     void WriteWindow(dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t count);
     void Whisperization(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void Robotization(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void PitchShift(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void Phaser(dsp::Complex<float> * fft_data, uint32_t fft_size);
+    inline void PerformFFT(dsp::Complex<float>* input, dsp::Complex<float>* output, bool inverse);
 };
 

@@ -48,24 +48,27 @@ void PhaseVocoder::PhaseLock()
 
 }
 
-void PhaseVocoder::Process(dsp::Complex<float> * fft_data, uint32_t fft_size, ProcessType type)
+void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float> * frequency_domain, dsp::Complex<float> * time_domain_output, uint32_t fft_size, ProcessType type)
 {
+    PerformFFT(time_domain, frequency_domain, false);
     switch (type)
     {
     case ProcessType::PitchShift:
-        PitchShift(fft_data, fft_size);
+        PitchShift(frequency_domain, fft_size);
         break;
     case ProcessType::Robotization:
-        Robotization(fft_data, fft_size);
+        Robotization(frequency_domain, fft_size);
         break;
     case ProcessType::Whisperization:
-        Whisperization(fft_data, fft_size);
+        Whisperization(frequency_domain, fft_size);
         break;
     case ProcessType::Phaser:
-        Phaser(fft_data, fft_size);
+        Phaser(frequency_domain, fft_size);
+        break;
     default:
         break;
     }
+    PerformFFT(frequency_domain, time_domain_output, true);
 }
  
 inline float get_random_phase()
@@ -156,6 +159,18 @@ void PhaseVocoder::Phaser(dsp::Complex<float>* fft_data, uint32_t fft_size)
     magnitude = abs(fft_data[bin]);
     fft_data[bin].real(_cos * magnitude);
     fft_data[bin].imag(_sin * magnitude);
+}
+
+inline void PhaseVocoder::PerformFFT(dsp::Complex<float>* input, dsp::Complex<float>* output, bool inverse)
+{
+    if (!inverse)
+    {
+        m_forward_fft.perform(input, output, false);
+    }
+    else
+    {
+        m_reverse_fft.perform(input, output, true);
+    }
 }
 
 void PhaseVocoder::ApplyWindowFunction(float* input, dsp::Complex<float>* output, uint32_t count, uint32_t window_start)
@@ -272,18 +287,6 @@ void PhaseVocoder::ApplyProcessing( float* input,
     ApplyWindowFunction(input, buff, count, window_start);
 	//ApplyCircularShift(buff, shift_buff, count);
 
-    for (uint32_t i = count; i < FFT_SIZE * 2; i++)
-    {
-        buff[i] = dsp::Complex<float>(0.0f, 0.0f);
-		shift_buff[i] = dsp::Complex<float>(0.0f, 0.0f);
-    }
-    for (uint32_t i = 0; i < FFT_SIZE * 2; i++)
-    {
-        intermed_fw[i] = dsp::Complex<float>(0.0f, 0.0f);
-        intermed_rv[i] = dsp::Complex<float>(0.0f, 0.0f);
-    }
-
-    m_forward_fft.perform(buff, intermed_fw, false);
 
 #if (SCALING_FACTOR != 1)
     {
@@ -295,20 +298,10 @@ void PhaseVocoder::ApplyProcessing( float* input,
         }
     }
 #endif
-    Process(intermed_fw, FFT_SIZE, m_type);
+    Process(buff, intermed_fw, intermed_rv, FFT_SIZE, m_type);
 
-    // Inverse FFT
-    m_reverse_fft.perform(intermed_fw, intermed_rv, true);
 	//ApplyCircularShift(intermed_rv, shift_buff, count);
 
     // Commit data to output buffer, since it is windowed we can just add
     WriteWindow(intermed_rv, output, count);
 }
-
-/*
-static void DSPThread(float* input, float* output, uint32_t buff_size, uint32_t channel, void * phase_vocoder)
-{
-    PhaseVocoder* pv = (PhaseVocoder*)phase_vocoder;
-    pv->DSP(input, output, buff_size, channel);
-}
-*/
