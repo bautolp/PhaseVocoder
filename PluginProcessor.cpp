@@ -16,7 +16,7 @@
 
 float PhaseVocoder::m_effect;
 ProcessType PhaseVocoder::m_type;
-
+float PhaseVocoder::m_pitch_ratio;
 //==============================================================================
 PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
