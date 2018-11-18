@@ -12,28 +12,23 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-enum WindowFunctionType
-{
-    Flat,
-    Hanning
-};
-
 enum ProcessType
 {
     PitchShift,
     Robotization,
-    Whisperization
+    Whisperization,
+    Phaser,
+    NoneDebug
 };
 
 #define FFT_ORDER 9
 #define FFT_SIZE (1 << FFT_ORDER)
-#define SEGMENT_SIZE 256
-#define WINDOW_SIZE 512
-#define HOP_SIZE 256
-#define SCALING_FACTOR ((FFT_SIZE / WINDOW_SIZE) * (WINDOW_SIZE / (HOP_SIZE*2)))
+#define WINDOW_SIZE 256
+#define HOP_SIZE 128
+#define SCALING_FACTOR (WINDOW_SIZE / (HOP_SIZE*2))
 
-#define INTERM_BUFFER_SIZE 8192
-
+#define THREAD_COUNT 2
+#define BUFFER_SIZE FFT_SIZE * 2
 
 class PhaseVocoder
 {
@@ -42,8 +37,10 @@ public:
     ~PhaseVocoder();
     void DSP(float* input, float* output, uint32_t buff_size, uint32_t channel);
     void Finish();
-	static float m_effect;
-	static void changeEffect(const float newValue);
+    static float m_effect;
+    static void change_effect(const float new_value);
+    static ProcessType m_type;
+    static void change_type(const ProcessType new_type);
 
 private:
 
@@ -52,20 +49,22 @@ private:
 
     uint32_t m_buffer_size_online[2] = { 0, 0 };
 
-    dsp::Complex<float> m_complex_intermed_fw[FFT_SIZE];
-    dsp::Complex<float> m_complex_intermed_rv[FFT_SIZE];
-    dsp::Complex<float> m_complex_in[2][FFT_SIZE * 2];
-    dsp::Complex<float> m_complex_out[2][FFT_SIZE * 2];
+    dsp::Complex<float> m_complex_intermed_fw[THREAD_COUNT][BUFFER_SIZE];
+    dsp::Complex<float> m_complex_intermed_rv[THREAD_COUNT][BUFFER_SIZE];
+    dsp::Complex<float> m_complex_out[THREAD_COUNT][BUFFER_SIZE];
     uint32_t m_window_size = WINDOW_SIZE;
     uint32_t m_hop_size = HOP_SIZE;
     dsp::FFT m_forward_fft;
     dsp::FFT m_reverse_fft;
     float m_window_function[WINDOW_SIZE];
+    float m_input_buffer[THREAD_COUNT][BUFFER_SIZE];
+    float m_output_buffer[THREAD_COUNT][BUFFER_SIZE];
 
-    void ProcessSegment(dsp::Complex<float>* input_buffer, dsp::Complex<float> * output_buffer, uint32_t segment_size);
-    void ApplyProcessing(dsp::Complex<float>* input, dsp::Complex<float>* intermed_fw, dsp::Complex<float>* intermed_rv, dsp::Complex<float>* output, uint32_t count, uint32_t window_start);
-    void ApplyWindowFunction(dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t count, uint32_t window_start);
+    void ProcessSegment(float* input_buffer, dsp::Complex<float> * output_buffer, uint32_t segment_size, uint32_t channel);
+    void ApplyProcessing(float* input, dsp::Complex<float>* intermed_fw, dsp::Complex<float>* intermed_rv, dsp::Complex<float>* output, uint32_t count, uint32_t window_start);
+    void ApplyWindowFunction(float* input, dsp::Complex<float>* output, uint32_t count, uint32_t window_start);
     void GenerateWindowFunction();
+    void ApplyCircularShift(const float* input, float* output, uint32_t segment_size);
 	void ApplyCircularShift(const dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t segment_size);
 
     void Process(dsp::Complex<float> * fft_data, uint32_t fft_size, ProcessType type);
@@ -73,4 +72,7 @@ private:
     void WriteWindow(dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t count);
     void Whisperization(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void Robotization(dsp::Complex<float> * fft_data, uint32_t fft_size);
+    void PitchShift(dsp::Complex<float> * fft_data, uint32_t fft_size);
+    void Phaser(dsp::Complex<float> * fft_data, uint32_t fft_size);
 };
+

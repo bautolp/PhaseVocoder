@@ -10,7 +10,12 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <vector>
+#include <iostream>
+#include <thread>       
+
 float PhaseVocoder::m_effect;
+ProcessType PhaseVocoder::m_type;
 
 //==============================================================================
 PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
@@ -28,8 +33,6 @@ PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
 
 	NormalisableRange<float> effectRange(0.0f, 1.0f);
 	treeState.createAndAddParameter("Robotization_Phase", "Robotization_Phase", "Robotization_Phase", effectRange, 1.0f, nullptr, nullptr);
-
-    WindowFunctionType window_type = WindowFunctionType::Hanning;
 
     phase_vocoder = new PhaseVocoder();
 }
@@ -178,11 +181,21 @@ void PhaseVocoderPluginAudioProcessor::processBlock (AudioBuffer<float>& buffer,
     (void)midiMessages;
     ScopedNoDenormals noDenormals;
 
+    std::vector<std::thread> thrd;
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
         float * output = buffer.getWritePointer(channel);
-        //phase_vocoder->DSPOffline(output, output, buffer.getNumSamples(), channel);
-        phase_vocoder->DSP(output, output, buffer.getNumSamples(), channel);
+        thrd.push_back(std::thread(DSPThread, output, output, buffer.getNumSamples(), channel, (void*)phase_vocoder));
+        //dsp_thread.join();
+        ///float * output = buffer.getWritePointer(channel);
+        //std::thread dsp_thread(DSPThread, output, output, buffer.getNumSamples(), channel, (void*)phase_vocoder);
+        //dsp_thread.join();
+//        thrd.push_back(std::thread(DSPThread, output, output, buffer.getNumSamples(), channel, (void*)phase_vocoder));
+    }
+
+    for (int channel = 0; channel < thrd.size(); ++channel)
+    {
+        thrd[channel].join();
     }
 }
 
@@ -219,4 +232,10 @@ void PhaseVocoderPluginAudioProcessor::setStateInformation (const void* data, in
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new PhaseVocoderPluginAudioProcessor();
+}
+
+static void DSPThread(float* input, float* output, uint32_t buff_size, uint32_t channel, void * phase_vocoder)
+{
+    PhaseVocoder* pv = (PhaseVocoder*)phase_vocoder;
+    pv->DSP(input, output, buff_size, channel);
 }

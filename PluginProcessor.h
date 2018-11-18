@@ -68,3 +68,5 @@ private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PhaseVocoderPluginAudioProcessor)
 };
+
+static void DSPThread(float* input, float* output, uint32_t buff_size, uint32_t channel, void * phase_vocoder);
