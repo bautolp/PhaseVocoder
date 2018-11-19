@@ -239,6 +239,11 @@ void PhaseVocoderPluginAudioProcessorEditor::buttonClicked(Button * toggleButton
                 PhaseVocoder::change_slider_en(m_freq_bin[i].toggle.getToggleState(), i);
                 break;
             }
+            if (toggleButton == &m_freq_bin[i].range_toggle)
+            {
+                PhaseVocoder::change_range_en(m_freq_bin[i].range_toggle.getToggleState(), i);
+                break;
+            }
         }
     }
 }
@@ -272,13 +277,14 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
             if (slider == &m_freq_bin[i].slider)
             {
                 PhaseVocoder::change_slider_val((float)m_freq_bin[i].slider.getValue(), i);
-                double min = -m_freq_bin[i].slider.getValue();
-                double max = 22050.0 - m_freq_bin[i].slider.getValue();
+                double lower = m_freq_bin[i].slider.getValue();
+                double upper = 22050.0 - m_freq_bin[i].slider.getValue();
+                double max = (upper < lower) ? upper : lower;
+                double min = 0.0;
                 double mean;
-                if (m_freq_bin[i].range.getValue() > max || m_freq_bin[i].range.getValue() < min)
+                if (m_freq_bin[i].range.getValue() > max)
                 {
-                    double dist = abs(max) + abs(min);
-                    mean = min + dist / 2;
+                    mean = (max) / 2;
                 }
                 else
                 {
@@ -290,6 +296,11 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
                 int upper_bound = (int)max;
                 std::string label_str = std::to_string(lower_bound) + " - " + std::to_string(upper_bound) + " Hz";
                 m_freq_bin[i].range_label.setText(label_str, NotificationType::sendNotification);
+                break;
+            }
+            if (slider == &m_freq_bin[i].range)
+            {
+                PhaseVocoder::change_range_val((float)m_freq_bin[i].range.getValue(), i);
                 break;
             }
         }

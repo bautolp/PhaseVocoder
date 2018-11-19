@@ -48,11 +48,11 @@ public:
         bool enable;
         float mean;
         float slider_min;
+        float slider_median;
         float slider_max;
         uint32_t output_bin;
         bool range_enable;
         float range;
-        float range_base;
     };
     static slider_info m_sliders[SLIDER_COUNT];
     static float m_effect;
@@ -62,7 +62,9 @@ public:
     static ProcessType m_type;
     static void change_type(const ProcessType new_type);
     static void change_slider_val(const float new_value, const uint32_t slider_idx);
+    static void change_range_val(const float new_value, const uint32_t slider_idx);
     static void change_slider_en(const bool new_value, const uint32_t slider_idx);
+    static void change_range_en(const bool new_value, const uint32_t slider_idx);
 
 private:
 

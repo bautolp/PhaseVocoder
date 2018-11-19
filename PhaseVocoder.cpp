@@ -14,9 +14,29 @@ PhaseVocoder::PhaseVocoder() :
         m_forward_fft(FFT_ORDER), m_reverse_fft(FFT_ORDER)
 {
     m_pitch_ratio = 2.0f;
+    for (uint32_t i = 0; i < SLIDER_COUNT; i++)
+    {
+        if (i == 0)
+        {
+            m_sliders[i].slider_min = 0.0f;
+            m_sliders[i].slider_max = 110.0f;
+        } 
+        else
+        {
+            m_sliders[i].slider_min = (float)(55 << i);
+            m_sliders[i].slider_max = (float)(55 << (i+1));
+        }
+        m_sliders[i].slider_median = (m_sliders[i].slider_max + m_sliders[i].slider_min) / 2;
+    }
+    uint32_t bin_pos;
     for (uint32_t i = 0; i < FREQUENCY_MAX; i++)
     {
-        m_freq_to_bin[i] = (uint32_t)((float)i * (float)FFT_SIZE / (2 * SAMPLE_RATE));
+        bin_pos = (uint32_t)((float)i * (float)FFT_SIZE / (SAMPLE_RATE));
+        if (bin_pos > FFT_SIZE / 2)
+        {
+            bin_pos = FFT_SIZE - bin_pos;
+        }
+        m_freq_to_bin[i] = bin_pos;
     }
     for (uint32_t i = 0; i < FFT_SIZE; i++)
     {
@@ -203,9 +223,19 @@ void PhaseVocoder::change_slider_val(const float new_value, const uint32_t slide
     m_sliders[slider_idx].output_bin = (uint32_t)floorf(new_value * (float)FFT_SIZE / SAMPLE_RATE);
 }
 
+void PhaseVocoder::change_range_val(const float new_value, const uint32_t slider_idx)
+{
+    m_sliders[slider_idx].range = new_value;
+}
+
 void PhaseVocoder::change_slider_en(const bool new_value, const uint32_t slider_idx)
 {
     m_sliders[slider_idx].enable = new_value;
+}
+
+void PhaseVocoder::change_range_en(const bool new_value, const uint32_t slider_idx)
+{
+    m_sliders[slider_idx].range_enable = new_value;
 }
 
 void PhaseVocoder::Robotization(dsp::Complex<float> * fft_data, uint32_t fft_size)
@@ -257,35 +287,38 @@ void PhaseVocoder::PitchShift(dsp::Complex<float>* fft_data, uint32_t fft_size, 
 void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size)
 {
     dsp::Complex<float> temp[FFT_SIZE];
-    uint32_t relevant_slider;
     uint32_t frequency;
     float slider_pos;
     float slider_scaled;
-    uint32_t out_bin;
+    uint32_t final_frequency;
+    uint32_t final_bin;
+    slider_info * _slider;
     for (uint32_t bin = 0; bin < fft_size; bin++)
     {
-        relevant_slider = m_bin_to_slider[bin];
-        if (m_sliders[relevant_slider].enable)
+        _slider = &m_sliders[m_bin_to_slider[bin]];
+        if (_slider->enable)
         {
-            /*
-            if (m_sliders[relevant_slider].range_enable)
+            if (_slider->range_enable)
             {
                 frequency = m_bin_to_freq[bin];
-                slider_pos = ((float)frequency - (float)m_sliders[relevant_slider].slider_min) /
-                    ((float)m_sliders[relevant_slider].slider_max - (float)m_sliders[relevant_slider].slider_min);
-                slider_scaled = slider_pos * m_sliders[relevant_slider].range - m_sliders[relevant_slider].range_base;
-                temp[m_sliders[relevant_slider].output_bin] += fft_data[bin];
+                
+                slider_pos = ((float)frequency - _slider->slider_min) / (_slider->slider_max - _slider->slider_min);
+                slider_scaled = (slider_pos * _slider->range) - (_slider->range / 2);
+                final_frequency = m_bin_to_freq[_slider->output_bin] + (int)slider_scaled;
+                if (final_frequency >= FREQUENCY_MAX)
+                    final_frequency = FREQUENCY_MAX - 1;
+                final_bin = m_freq_to_bin[final_frequency];
+                temp[final_bin] += fft_data[bin];
             }
             else
             {
-                temp[m_sliders[relevant_slider].output_bin] += fft_data[bin];
+                temp[_slider->output_bin] += fft_data[bin];
             }
-            */
-            temp[m_sliders[relevant_slider].output_bin] += fft_data[bin];
         }
         else
+        {
             temp[bin] += fft_data[bin];
-        //temp[(bin + m_bin_ratio[bin]) % FFT_SIZE] += fft_data[bin];
+        }
     }
     for (uint32_t bin = 0; bin < fft_size; bin++)
     {
