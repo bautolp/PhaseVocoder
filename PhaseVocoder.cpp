@@ -14,6 +14,21 @@ PhaseVocoder::PhaseVocoder() :
         m_forward_fft(FFT_ORDER), m_reverse_fft(FFT_ORDER)
 {
     m_pitch_ratio = 2.0f;
+    for (uint32_t i = 0; i < FREQUENCY_MAX; i++)
+    {
+        m_freq_to_bin[i] = (uint32_t)((float)i * (float)FFT_SIZE / (2 * SAMPLE_RATE));
+    }
+    for (uint32_t i = 0; i < FFT_SIZE; i++)
+    {
+        m_bin_ratio[i] = i;
+        uint32_t bin_frequency;
+        if (i <= FFT_SIZE / 2)
+            bin_frequency = (uint32_t)((float)i * SAMPLE_RATE / (float)FFT_SIZE);
+        else
+            bin_frequency = (uint32_t)((float)(FFT_SIZE - i) * SAMPLE_RATE / (float)FFT_SIZE);
+        m_bin_to_freq[i] = bin_frequency;
+        m_bin_to_slider[i] = GetSlider(bin_frequency);
+    }
     GenerateWindowFunction();
     for (uint32_t i = 0; i < THREAD_COUNT; i++)
     {
@@ -30,6 +45,25 @@ PhaseVocoder::PhaseVocoder() :
             }
         }
     }
+}
+
+inline uint32_t PhaseVocoder::GetSlider(uint32_t frequency_input)
+{
+    uint32_t base_frequency = 55;
+    if (frequency_input < 110)
+    {
+        return 0;
+    }
+    for (uint32_t i = 0; i < SLIDER_COUNT; i++)
+    {
+        if ((base_frequency << i) <= frequency_input && (base_frequency << (i + 1)) > frequency_input)
+        {
+            return i;
+        }
+    }
+
+    // Exceeds last slider in frequency, return last slider
+    return (SLIDER_COUNT - 1);
 }
 
 void PhaseVocoder::Finish()
@@ -88,6 +122,7 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
                 if (++output_buffer_index >= fft_size)
                     output_buffer_index = 0;
             }
+            delete[] resampled_output;
         }
         break;
     case ProcessType::Robotization:
@@ -105,6 +140,14 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
         Phaser(frequency_domain, fft_size);
         PerformFFT(frequency_domain, time_domain_output, true);
         break;
+    case ProcessType::NoneDebug:
+        PerformFFT(time_domain, frequency_domain, false);
+        PerformFFT(frequency_domain, time_domain_output, true);
+        break;
+    case ProcessType::BinShift:
+        PerformFFT(time_domain, frequency_domain, false);
+        BinShift(frequency_domain, fft_size);
+        PerformFFT(frequency_domain, time_domain_output, true);
     default:
         break;
     }
@@ -154,6 +197,17 @@ void PhaseVocoder::change_type(const ProcessType new_type)
     m_type = new_type;
 }
 
+void PhaseVocoder::change_slider_val(const float new_value, const uint32_t slider_idx)
+{
+    m_sliders[slider_idx].mean = new_value;
+    m_sliders[slider_idx].output_bin = (uint32_t)floorf(new_value * (float)FFT_SIZE / SAMPLE_RATE);
+}
+
+void PhaseVocoder::change_slider_en(const bool new_value, const uint32_t slider_idx)
+{
+    m_sliders[slider_idx].enable = new_value;
+}
+
 void PhaseVocoder::Robotization(dsp::Complex<float> * fft_data, uint32_t fft_size)
 {
     uint32_t bin = 0;
@@ -197,6 +251,45 @@ void PhaseVocoder::PitchShift(dsp::Complex<float>* fft_data, uint32_t fft_size, 
         // Convert back to real-imaginary form
         temp_data[i].real(magnitude * cosf(m_psi[channel][i]));
         temp_data[i].imag(magnitude * sinf(m_psi[channel][i]));
+    }
+}
+
+void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size)
+{
+    dsp::Complex<float> temp[FFT_SIZE];
+    uint32_t relevant_slider;
+    uint32_t frequency;
+    float slider_pos;
+    float slider_scaled;
+    uint32_t out_bin;
+    for (uint32_t bin = 0; bin < fft_size; bin++)
+    {
+        relevant_slider = m_bin_to_slider[bin];
+        if (m_sliders[relevant_slider].enable)
+        {
+            /*
+            if (m_sliders[relevant_slider].range_enable)
+            {
+                frequency = m_bin_to_freq[bin];
+                slider_pos = ((float)frequency - (float)m_sliders[relevant_slider].slider_min) /
+                    ((float)m_sliders[relevant_slider].slider_max - (float)m_sliders[relevant_slider].slider_min);
+                slider_scaled = slider_pos * m_sliders[relevant_slider].range - m_sliders[relevant_slider].range_base;
+                temp[m_sliders[relevant_slider].output_bin] += fft_data[bin];
+            }
+            else
+            {
+                temp[m_sliders[relevant_slider].output_bin] += fft_data[bin];
+            }
+            */
+            temp[m_sliders[relevant_slider].output_bin] += fft_data[bin];
+        }
+        else
+            temp[bin] += fft_data[bin];
+        //temp[(bin + m_bin_ratio[bin]) % FFT_SIZE] += fft_data[bin];
+    }
+    for (uint32_t bin = 0; bin < fft_size; bin++)
+    {
+        fft_data[bin] = temp[bin];
     }
 }
 
