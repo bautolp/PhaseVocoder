@@ -56,6 +56,7 @@ private:
     Slider phaseSlider;
     ComboBox m_phase_vocoder_type;
     FreqBin m_freq_bin[SLIDER_COUNT];
+    Slider m_master_bin_shift;
     ToggleButton m_set_all_bins;
     ToggleButton m_set_all_ranges;
 

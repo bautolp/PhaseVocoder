@@ -27,10 +27,23 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
         SetupRange(i);
     }
 
+    addAndMakeVisible(m_master_bin_shift);
+    m_master_bin_shift.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    m_master_bin_shift.setRange(0.1f, 10.0f);
+    m_master_bin_shift.setSkewFactorFromMidPoint(1.0f);
+    m_master_bin_shift.setValue(2.0f);
+    m_master_bin_shift.setBounds((int)((float)getWidth() * 0.35625f), (int)(0.025f * getHeight()),
+        (int)((float)getWidth() * 0.5f), (int)((float)getHeight() * 0.06125f));
+    m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
+    m_master_bin_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(100, 0, 125));
+    m_master_bin_shift.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
+    m_master_bin_shift.addListener(this);
+    m_master_bin_shift.setVisible(false);
+
     addAndMakeVisible(m_set_all_bins);
     m_set_all_bins.setButtonText("Mean");
     m_set_all_bins.setBounds((int)((float)getWidth() * 0.25625f), (int)((0.025f)* getHeight()),
-        (int)((float)getWidth() * 0.25f), (int)((float)getHeight() * 0.05f));
+        (int)((float)getWidth() * 0.1f), (int)((float)getHeight() * 0.05f));
     m_set_all_bins.addListener(this);
     
     addAndMakeVisible(m_set_all_ranges);
@@ -71,12 +84,16 @@ void PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderChanged()
 
 void PhaseVocoderPluginAudioProcessorEditor::SetupSlider(uint32_t slider_idx)
 {
+    uint32_t low = 55 << slider_idx;
+    uint32_t hi = 55 << (slider_idx + 1);
+    uint32_t mid = (low + hi) / 2;
+    double desired = (double)mid * m_master_bin_shift.getValue();
     float slider_pos = (float)slider_idx * 0.10f + 0.10f;
     addAndMakeVisible(m_freq_bin[slider_idx].slider);
     m_freq_bin[slider_idx].slider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     m_freq_bin[slider_idx].slider.setRange(0.0f, 22050.0f);
     m_freq_bin[slider_idx].slider.setSkewFactorFromMidPoint(2000.0f);
-    m_freq_bin[slider_idx].slider.setValue(2000.f);
+    m_freq_bin[slider_idx].slider.setValue(desired);
     m_freq_bin[slider_idx].slider.setBounds((int)((float)getWidth() * 0.05f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.5f), (int)((float)getHeight() * 0.06125f));
     m_freq_bin[slider_idx].slider.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
@@ -114,7 +131,7 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupRange(uint32_t slider_idx)
     m_freq_bin[slider_idx].range.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     m_freq_bin[slider_idx].range.setRange(-2000.0f, 18100.0f);
     m_freq_bin[slider_idx].range.setSkewFactorFromMidPoint(0.0f);
-    m_freq_bin[slider_idx].range.setValue(0.0f);
+    m_freq_bin[slider_idx].range.setValue(m_freq_bin[slider_idx].range.getMaximum());
     m_freq_bin[slider_idx].range.setBounds((int)((float)getWidth() * 0.6f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.4f), (int)((float)getHeight() * 0.06125f));
     m_freq_bin[slider_idx].range.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
@@ -252,6 +269,7 @@ void PhaseVocoderPluginAudioProcessorEditor::SetFrequencyBinVisibility(bool vis)
 {
     m_set_all_bins.setVisible(vis);
     m_set_all_ranges.setVisible(vis);
+    m_master_bin_shift.setVisible(vis);
     for (uint32_t i = 0; i < SLIDER_COUNT; i++)
     {
         m_freq_bin[i].label.setVisible(vis);
@@ -270,6 +288,26 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
     {
 		PhaseVocoder::change_effect((float)phaseSlider.getValue());
 	}
+    else if (slider == &m_master_bin_shift)
+    {
+        for (uint32_t i = 0; i < SLIDER_COUNT; i++)
+        {
+            if (m_freq_bin[i].toggle.getToggleState())
+            {
+                uint32_t low = 55 << i;
+                uint32_t hi = 55 << (i + 1);
+                if (hi > 22050)
+                {
+                    hi = 22050;
+                }
+                uint32_t mid = (low + hi) / 2;
+                double desired = (double)mid * m_master_bin_shift.getValue();
+                m_freq_bin[i].slider.setValue(desired);
+                
+                m_freq_bin[i].range.setValue(desired);
+            }
+        }
+    }
     else
     {
         for (uint32_t i = 0; i < SLIDER_COUNT; i++)
