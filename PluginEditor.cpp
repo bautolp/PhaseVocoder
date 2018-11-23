@@ -27,15 +27,28 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
         SetupRange(i);
     }
 
+    addAndMakeVisible(m_pitch_shift);
+    m_pitch_shift.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    m_pitch_shift.setRange(0.1f, 10.0f);
+    m_pitch_shift.setSkewFactorFromMidPoint(1.0f);
+    m_pitch_shift.setValue(2.0f);
+    m_pitch_shift.setBounds((int)((float)getWidth() * 0.35625f), (int)(0.025f * getHeight()),
+        (int)((float)getWidth() * 0.25f), (int)((float)getHeight() * 0.06125f));
+    m_pitch_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
+    m_pitch_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
+    m_pitch_shift.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
+    m_pitch_shift.addListener(this);
+    m_pitch_shift.setVisible(false);
+
     addAndMakeVisible(m_master_bin_shift);
     m_master_bin_shift.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     m_master_bin_shift.setRange(0.1f, 10.0f);
     m_master_bin_shift.setSkewFactorFromMidPoint(1.0f);
     m_master_bin_shift.setValue(2.0f);
     m_master_bin_shift.setBounds((int)((float)getWidth() * 0.35625f), (int)(0.025f * getHeight()),
-        (int)((float)getWidth() * 0.5f), (int)((float)getHeight() * 0.06125f));
-    m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
-    m_master_bin_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(100, 0, 125));
+        (int)((float)getWidth() * 0.25f), (int)((float)getHeight() * 0.06125f));
+    m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
+    m_master_bin_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
     m_master_bin_shift.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
     m_master_bin_shift.addListener(this);
     m_master_bin_shift.setVisible(false);
@@ -96,8 +109,8 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupSlider(uint32_t slider_idx)
     m_freq_bin[slider_idx].slider.setValue(desired);
     m_freq_bin[slider_idx].slider.setBounds((int)((float)getWidth() * 0.05f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.5f), (int)((float)getHeight() * 0.06125f));
-    m_freq_bin[slider_idx].slider.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
-    m_freq_bin[slider_idx].slider.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(100, 0, 125));
+    m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
+    m_master_bin_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
     m_freq_bin[slider_idx].slider.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
     m_freq_bin[slider_idx].slider.addListener(this);
 
@@ -134,8 +147,8 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupRange(uint32_t slider_idx)
     m_freq_bin[slider_idx].range.setValue(m_freq_bin[slider_idx].range.getMaximum());
     m_freq_bin[slider_idx].range.setBounds((int)((float)getWidth() * 0.6f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.4f), (int)((float)getHeight() * 0.06125f));
-    m_freq_bin[slider_idx].range.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
-    m_freq_bin[slider_idx].range.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(100, 0, 125));
+    m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
+    m_master_bin_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
     m_freq_bin[slider_idx].range.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
     m_freq_bin[slider_idx].range.addListener(this);
 
@@ -200,31 +213,49 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             PhaseVocoder::change_type(ProcessType::Robotization);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
+            m_pitch_shift.setVisible(false);
+            m_set_all_ranges.setToggleState(false, NotificationType::sendNotification);
+            m_set_all_bins.setToggleState(false, NotificationType::sendNotification);
             break;
         case 2:
             PhaseVocoder::change_type(ProcessType::Whisperization);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
+            m_pitch_shift.setVisible(false);
+            m_set_all_ranges.setToggleState(false, NotificationType::sendNotification);
+            m_set_all_bins.setToggleState(false, NotificationType::sendNotification);
             break;
         case 3:
             PhaseVocoder::change_type(ProcessType::PitchShift);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
+            m_pitch_shift.setVisible(true);
+            m_set_all_ranges.setToggleState(false, NotificationType::sendNotification);
+            m_set_all_bins.setToggleState(false, NotificationType::sendNotification);
             break;
         case 4:
             PhaseVocoder::change_type(ProcessType::Phaser);
             phaseSlider.setVisible(true);
             SetFrequencyBinVisibility(false);
+            m_pitch_shift.setVisible(false);
+            m_set_all_ranges.setToggleState(false, NotificationType::sendNotification);
+            m_set_all_bins.setToggleState(false, NotificationType::sendNotification);
             break;
         case 5:
             PhaseVocoder::change_type(ProcessType::NoneDebug);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
+            m_pitch_shift.setVisible(false);
+            m_set_all_ranges.setToggleState(false, NotificationType::sendNotification);
+            m_set_all_bins.setToggleState(false, NotificationType::sendNotification);
             break;
         case 6:
             PhaseVocoder::change_type(ProcessType::BinShift);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(true);
+            m_pitch_shift.setVisible(false);
+            m_set_all_ranges.setToggleState(true, NotificationType::sendNotification);
+            m_set_all_bins.setToggleState(true, NotificationType::sendNotification);
             break;
         }
     }
@@ -288,6 +319,10 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
     {
 		PhaseVocoder::change_effect((float)phaseSlider.getValue());
 	}
+    else if (slider == &m_pitch_shift)
+    {
+        PhaseVocoder::change_pitch((float)m_pitch_shift.getValue());
+    }
     else if (slider == &m_master_bin_shift)
     {
         for (uint32_t i = 0; i < SLIDER_COUNT; i++)

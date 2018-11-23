@@ -48,6 +48,8 @@ PhaseVocoder::PhaseVocoder() :
             bin_frequency = (uint32_t)((float)(FFT_SIZE - i) * SAMPLE_RATE / (float)FFT_SIZE);
         m_bin_to_freq[i] = bin_frequency;
         m_bin_to_slider[i] = GetSlider(bin_frequency);
+        m_prev_phase[i] = 0.0f;
+        m_phase_incr[i] = (float)(HOP_SIZE) * (float)m_bin_to_freq[i];
     }
     GenerateWindowFunction();
     for (uint32_t i = 0; i < THREAD_COUNT; i++)
@@ -212,6 +214,11 @@ void PhaseVocoder::change_effect(const float new_value)
     m_effect = new_value;
 }
 
+void PhaseVocoder::change_pitch(const float new_value)
+{
+    m_pitch_ratio = new_value;
+}
+
 void PhaseVocoder::change_type(const ProcessType new_type)
 {
     m_type = new_type;
@@ -273,7 +280,7 @@ void PhaseVocoder::PitchShift(dsp::Complex<float>* fft_data, uint32_t fft_size, 
         // Convert the bin into magnitude-phase representation
         magnitude = abs(fft_data[i]);
         phase = arg(fft_data[i]);
-        bin_frequency = 2.0f * (float)M_PI * (float)i / fft_size;
+        bin_frequency = 2.0f * (float)M_PI * (float)i / (float)fft_size;
         delta_phi = (bin_frequency * m_hop_size) + princarg(phase - m_last_phase[channel][i] - (bin_frequency * m_hop_size));
         m_last_phase[channel][i] = phase;
         m_psi[channel][i] = princarg(m_psi[channel][i] + delta_phi * m_hop_size);
@@ -303,7 +310,7 @@ void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size)
                 frequency = m_bin_to_freq[bin];
 
                 slider_pos = ((float)frequency - _slider->slider_min) / (_slider->slider_max - _slider->slider_min);
-                slider_scaled = (slider_pos * _slider->range) - (_slider->range / 2);
+                slider_scaled = (slider_pos * (2 * _slider->range)) - _slider->range;
                 final_frequency = m_bin_to_freq[_slider->output_bin] + (int)slider_scaled;
                 if (final_frequency >= FREQUENCY_MAX)
                     final_frequency = FREQUENCY_MAX - 1;
@@ -320,9 +327,14 @@ void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size)
             temp[bin] += fft_data[bin];
         }
     }
+
+    float magnitude;
     for (uint32_t bin = 0; bin < fft_size; bin++)
     {
-        fft_data[bin] = temp[bin];
+        magnitude = abs(temp[bin]);
+        m_prev_phase[bin] = princarg(m_prev_phase[bin] + m_phase_incr[bin]);
+        fft_data[bin].real(magnitude * cosf(m_prev_phase[bin]));
+        fft_data[bin].imag(magnitude * sinf(m_prev_phase[bin]));
     }
 }
 
@@ -473,7 +485,7 @@ void PhaseVocoder::ApplyProcessing( float* input,
 	dsp::Complex<float> shift_buff[FFT_SIZE * 2];
 
     ApplyWindowFunction(input, buff, count, window_start);
-	//ApplyCircularShift(buff, shift_buff, count);
+	ApplyCircularShift(buff, shift_buff, count);
 
 
 #if (SCALING_FACTOR != 1)
@@ -486,10 +498,10 @@ void PhaseVocoder::ApplyProcessing( float* input,
         }
     }
 #endif
-    Process(buff, intermed_fw, intermed_rv, FFT_SIZE, m_type, channel);
+    Process(shift_buff, intermed_fw, intermed_rv, FFT_SIZE, m_type, channel);
 
-	//ApplyCircularShift(intermed_rv, shift_buff, count);
+	ApplyCircularShift(intermed_rv, shift_buff, count);
 
     // Commit data to output buffer, since it is windowed we can just add
-    WriteWindow(intermed_rv, output, count);
+    WriteWindow(shift_buff, output, count);
 }

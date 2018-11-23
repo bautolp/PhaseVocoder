@@ -59,6 +59,7 @@ private:
     Slider m_master_bin_shift;
     ToggleButton m_set_all_bins;
     ToggleButton m_set_all_ranges;
+    Slider m_pitch_shift;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PhaseVocoderPluginAudioProcessorEditor)
 };

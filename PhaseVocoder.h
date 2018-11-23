@@ -59,6 +59,7 @@ public:
     static float m_pitch_ratio;
     static uint32_t m_bin_ratio[FFT_SIZE];
     static void change_effect(const float new_value);
+    static void change_pitch(const float new_value);
     static ProcessType m_type;
     static void change_type(const ProcessType new_type);
     static void change_slider_val(const float new_value, const uint32_t slider_idx);
@@ -71,6 +72,8 @@ private:
     // Allocate output buffer and tmp buffer
     uint32_t m_bin_to_slider[FFT_SIZE];
     uint32_t m_bin_to_freq[FFT_SIZE];
+    float m_prev_phase[FFT_SIZE];
+    float m_phase_incr[FFT_SIZE];
     uint32_t m_freq_to_bin[FREQUENCY_MAX];
     uint32_t m_buffer_size[2] = { 0, 0 };
     uint32_t m_buffer_size_online[2] = { 0, 0 };
