@@ -120,6 +120,12 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
     {
     case ProcessType::PitchShift:
         {
+            float max = 0.0f;
+            for (uint32_t i = 0; i < fft_size; i++)
+            {
+                if (time_domain[i].real() > max)
+                    max = time_domain[i].real();
+            }
             dsp::Complex<float> time_domain_intermediate[FFT_SIZE];
             PerformFFT(time_domain, frequency_domain, false);
             PitchShift(frequency_domain, fft_size, channel);
@@ -148,6 +154,17 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
                     output_buffer_index = 0;
             }
             delete[] resampled_output;
+            float new_max = 0.0f;
+            for (uint32_t i = 0; i < fft_size; i++)
+            {
+                if (time_domain_output[i].real() > new_max)
+                    new_max = time_domain_output[i].real();
+            }
+            float factor = max / new_max;
+            for (uint32_t i = 0; i < fft_size; i++)
+            {
+                time_domain_output[i].real(time_domain_output[i].real() * factor);
+            }
         }
         break;
     case ProcessType::Robotization:
