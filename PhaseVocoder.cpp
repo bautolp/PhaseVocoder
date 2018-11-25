@@ -32,24 +32,27 @@ PhaseVocoder::PhaseVocoder() :
     for (uint32_t i = 0; i < FREQUENCY_MAX; i++)
     {
         bin_pos = (uint32_t)((float)i * (float)FFT_SIZE / (SAMPLE_RATE));
-        if (bin_pos > FFT_SIZE / 2)
+        /*if (bin_pos > FFT_SIZE / 2)
         {
             bin_pos = FFT_SIZE - bin_pos;
-        }
+        }*/
         m_freq_to_bin[i] = bin_pos;
     }
+
+    uint32_t bin_frequency; float normalized_freq;
     for (uint32_t i = 0; i < FFT_SIZE; i++)
     {
         m_bin_ratio[i] = i;
-        uint32_t bin_frequency;
-        if (i <= FFT_SIZE / 2)
-            bin_frequency = (uint32_t)((float)i * SAMPLE_RATE / (float)FFT_SIZE);
-        else
-            bin_frequency = (uint32_t)((float)(FFT_SIZE - i) * SAMPLE_RATE / (float)FFT_SIZE);
+        //if (i <= FFT_SIZE / 2)
+            bin_frequency = (uint32_t)((float)i * SAMPLE_RATE / (float)(FFT_SIZE));
+        //else
+        //    bin_frequency = (uint32_t)((float)(FFT_SIZE - i) * SAMPLE_RATE / (float)FFT_SIZE);
         m_bin_to_freq[i] = bin_frequency;
         m_bin_to_slider[i] = GetSlider(bin_frequency);
-        m_prev_phase[i] = 0.0f;
-        m_phase_incr[i] = (float)(HOP_SIZE) * (float)m_bin_to_freq[i];
+        m_prev_phase[0][i] = 0.0f;
+        m_prev_phase[1][i] = 0.0f;
+        normalized_freq = 2.0f * (float)M_PI * i / FFT_SIZE;
+        m_phase_incr[i] = (float)(HOP_SIZE) * (float)normalized_freq;
     }
     GenerateWindowFunction();
     for (uint32_t i = 0; i < THREAD_COUNT; i++)
@@ -168,7 +171,7 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
         break;
     case ProcessType::BinShift:
         PerformFFT(time_domain, frequency_domain, false);
-        BinShift(frequency_domain, fft_size);
+        BinShift(frequency_domain, fft_size, channel);
         PerformFFT(frequency_domain, time_domain_output, true);
     default:
         break;
@@ -291,7 +294,7 @@ void PhaseVocoder::PitchShift(dsp::Complex<float>* fft_data, uint32_t fft_size, 
     }
 }
 
-void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size)
+void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size, uint32_t channel)
 {
     dsp::Complex<float> temp[FFT_SIZE];
     uint32_t frequency;
@@ -328,13 +331,18 @@ void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size)
         }
     }
 
-    float magnitude;
+    float magnitude, phase, delta_phi;
     for (uint32_t bin = 0; bin < fft_size; bin++)
     {
         magnitude = abs(temp[bin]);
-        m_prev_phase[bin] = princarg(m_prev_phase[bin] + m_phase_incr[bin]);
-        fft_data[bin].real(magnitude * cosf(m_prev_phase[bin]));
-        fft_data[bin].imag(magnitude * sinf(m_prev_phase[bin]));
+        phase = arg(temp[bin]);
+
+        delta_phi = (m_phase_incr[bin]) + princarg(phase - m_prev_phase[channel][bin] - (m_phase_incr[bin]));
+        m_prev_phase[channel][bin] = phase;
+        m_appl_phase[channel][bin] = princarg(m_appl_phase[channel][bin] + delta_phi * HOP_SIZE);
+        
+        fft_data[bin].real(magnitude * cosf(m_appl_phase[channel][bin]));
+        fft_data[bin].imag(magnitude * sinf(m_appl_phase[channel][bin]));
     }
 }
 
@@ -485,23 +493,10 @@ void PhaseVocoder::ApplyProcessing( float* input,
 	dsp::Complex<float> shift_buff[FFT_SIZE * 2];
 
     ApplyWindowFunction(input, buff, count, window_start);
-	ApplyCircularShift(buff, shift_buff, count);
+    ApplyCircularShift(buff, shift_buff, count);
 
-
-#if (SCALING_FACTOR != 1)
-    {
-        float scaling_factor = (float)SCALING_FACTOR;
-        for (uint32_t i = 0; i < FFT_SIZE * 2; i++)
-        {
-            intermed_fw[i] = dsp::Complex<float>(intermed_fw[i].real() / (scaling_factor),
-                intermed_fw[i].imag() / (scaling_factor));
-        }
-    }
-#endif
     Process(shift_buff, intermed_fw, intermed_rv, FFT_SIZE, m_type, channel);
 
-	ApplyCircularShift(intermed_rv, shift_buff, count);
-
-    // Commit data to output buffer, since it is windowed we can just add
+    ApplyCircularShift(intermed_rv, shift_buff, count);
     WriteWindow(shift_buff, output, count);
 }

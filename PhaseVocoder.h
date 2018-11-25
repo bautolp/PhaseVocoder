@@ -72,7 +72,8 @@ private:
     // Allocate output buffer and tmp buffer
     uint32_t m_bin_to_slider[FFT_SIZE];
     uint32_t m_bin_to_freq[FFT_SIZE];
-    float m_prev_phase[FFT_SIZE];
+    float m_prev_phase[THREAD_COUNT][FFT_SIZE];
+    float m_appl_phase[THREAD_COUNT][FFT_SIZE];
     float m_phase_incr[FFT_SIZE];
     uint32_t m_freq_to_bin[FREQUENCY_MAX];
     uint32_t m_buffer_size[2] = { 0, 0 };
@@ -103,7 +104,7 @@ private:
     void Whisperization(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void Robotization(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void PitchShift(dsp::Complex<float> * fft_data, uint32_t fft_size, uint32_t channel);
-    void BinShift(dsp::Complex<float> * fft_data, uint32_t fft_size);
+    void BinShift(dsp::Complex<float> * fft_data, uint32_t fft_size, uint32_t channel);
     void Phaser(dsp::Complex<float> * fft_data, uint32_t fft_size);
     inline uint32_t GetSlider(uint32_t frequency_input);
     inline void PerformFFT(dsp::Complex<float>* input, dsp::Complex<float>* output, bool inverse);
