@@ -5,22 +5,22 @@
 
     It contains the basic framework code for a JUCE plugin editor.
 
-  ==============================================================================
+  ============================================================================== 
 */
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "Images.h"
 
-//=============================================================================
+//============================================================================= 
 PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (PhaseVocoderPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-    m_background_image = ImageCache::getFromMemory(Images::background_jpg, Images::background_jpgSize);
+    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize(m_width, m_hieght);
-
+	m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
     for (uint32_t i = 0; i < SLIDER_COUNT; i++)
     {
         SetupSlider(i);
@@ -32,8 +32,8 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
     m_pitch_shift.setRange(0.1f, 10.0f);
     m_pitch_shift.setSkewFactorFromMidPoint(1.0f);
     m_pitch_shift.setValue(2.0f);
-    m_pitch_shift.setBounds((int)((float)getWidth() * 0.35625f), (int)(0.025f * getHeight()),
-        (int)((float)getWidth() * 0.25f), (int)((float)getHeight() * 0.06125f));
+    m_pitch_shift.setBounds((int)((float)getWidth() * 0.325f), (int)(0.325f * getHeight()),
+        (int)((float)getWidth() * .35f), (int)((float)getHeight() * 0.06125f));
     m_pitch_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
     m_pitch_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
     m_pitch_shift.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
@@ -75,6 +75,9 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
     m_phase_vocoder_type.addListener(this);
     m_phase_vocoder_type.setSelectedId(1);
     m_phase_vocoder_type.setBounds((int)(0.025f * getWidth()), (int)(0.025f*getHeight()), (int)(getWidth()*0.2f), 20);
+	m_phase_vocoder_type.setColour(ComboBox::ColourIds::backgroundColourId ,Colour::fromFloatRGBA(0.0f,0.0f,0.0f,0.45f));
+	m_phase_vocoder_type.getLookAndFeel().setColour(PopupMenu::ColourIds::backgroundColourId, Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.8f));
+	m_phase_vocoder_type.getLookAndFeel().setColour(PopupMenu::ColourIds::highlightedBackgroundColourId, Colour::fromFloatRGBA(0.5f, 0.5f, 0.0f, 1.0f));
 
 	//slider initialization
 	sliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.treeState, "Phaser", phaseSlider);
@@ -83,8 +86,8 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
 	phaseSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
 	phaseSlider.setRange(0.0f, 1.0f);
 	phaseSlider.setValue(PhaseVocoder::m_effect);
-	phaseSlider.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(150, 0, 175));
-	phaseSlider.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(100, 0, 125));
+	phaseSlider.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
+	phaseSlider.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
 	phaseSlider.addListener(this);
 
 	setSize(m_width, m_hieght);
@@ -107,10 +110,10 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupSlider(uint32_t slider_idx)
     m_freq_bin[slider_idx].slider.setRange(0.0f, 22050.0f);
     m_freq_bin[slider_idx].slider.setSkewFactorFromMidPoint(2000.0f);
     m_freq_bin[slider_idx].slider.setValue(desired);
-    m_freq_bin[slider_idx].slider.setBounds((int)((float)getWidth() * 0.05f), (int)(slider_pos * getHeight()),
+    m_freq_bin[slider_idx].slider.setBounds((int)((float)getWidth() * 0.033f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.5f), (int)((float)getHeight() * 0.06125f));
-    m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
-    m_master_bin_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
+	m_freq_bin[slider_idx].slider.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
+	m_freq_bin[slider_idx].slider.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
     m_freq_bin[slider_idx].slider.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
     m_freq_bin[slider_idx].slider.addListener(this);
 
@@ -145,10 +148,10 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupRange(uint32_t slider_idx)
     m_freq_bin[slider_idx].range.setRange(-2000.0f, 18100.0f);
     m_freq_bin[slider_idx].range.setSkewFactorFromMidPoint(0.0f);
     m_freq_bin[slider_idx].range.setValue(m_freq_bin[slider_idx].range.getMaximum());
-    m_freq_bin[slider_idx].range.setBounds((int)((float)getWidth() * 0.6f), (int)(slider_pos * getHeight()),
+    m_freq_bin[slider_idx].range.setBounds((int)((float)getWidth() * 0.56f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.4f), (int)((float)getHeight() * 0.06125f));
-    m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
-    m_master_bin_shift.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
+	m_freq_bin[slider_idx].range.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
+	m_freq_bin[slider_idx].range.setColour(Slider::ColourIds::trackColourId, Colour::fromRGB(255, 255, 255));
     m_freq_bin[slider_idx].range.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 25);
     m_freq_bin[slider_idx].range.addListener(this);
 
@@ -181,9 +184,8 @@ void PhaseVocoderPluginAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
 	g.drawImage(m_background_image, 0, 0, m_width, m_hieght, 0, 0, m_background_image.getWidth(), m_background_image.getHeight());
-	g.setColour(Colour(216, 255, 224));
-	g.setFont(Font("Lucida Console", m_font_title_size, Font::FontStyleFlags::plain));
-	//g.drawFittedText("Vocodinator", (m_width) / 4, m_vertical_top_padding, m_width / 2, m_hieght / 8, Justification::centredTop, 1, 1);
+	//g.fillAll(Colour(125, 175, 0));
+	//g.setFont(Font("Lucida Console", m_font_title_size, Font::FontStyleFlags::plain));
 }
 
 void PhaseVocoderPluginAudioProcessorEditor::log(Graphics& g, std::string msg)
@@ -199,7 +201,7 @@ void PhaseVocoderPluginAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
-    phaseSlider.setBounds(juce::Rectangle<int>(100, 100, 150, 150));
+    phaseSlider.setBounds(juce::Rectangle<int>(getWidth()*0.3334, getHeight()*0.3334, getWidth()*0.3334, getHeight()*0.3334));
 }
 
 void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
@@ -211,6 +213,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
         {
         case 1:
             PhaseVocoder::change_type(ProcessType::Robotization);
+			m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
             m_pitch_shift.setVisible(false);
@@ -219,6 +222,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             break;
         case 2:
             PhaseVocoder::change_type(ProcessType::Whisperization);
+			m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
             m_pitch_shift.setVisible(false);
@@ -227,6 +231,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             break;
         case 3:
             PhaseVocoder::change_type(ProcessType::PitchShift);
+			m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
             m_pitch_shift.setVisible(true);
@@ -235,6 +240,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             break;
         case 4:
             PhaseVocoder::change_type(ProcessType::Phaser);
+			m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
             phaseSlider.setVisible(true);
             SetFrequencyBinVisibility(false);
             m_pitch_shift.setVisible(false);
@@ -243,6 +249,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             break;
         case 5:
             PhaseVocoder::change_type(ProcessType::NoneDebug);
+			m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(false);
             m_pitch_shift.setVisible(false);
@@ -251,6 +258,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             break;
         case 6:
             PhaseVocoder::change_type(ProcessType::BinShift);
+			m_background_image = ImageCache::getFromMemory(Images::background2_jpg, Images::background2_jpgSize);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(true);
             m_pitch_shift.setVisible(false);
