@@ -202,7 +202,7 @@ void PhaseVocoderPluginAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
-    phaseSlider.setBounds(juce::Rectangle<int>(getWidth()*0.3334, getHeight()*0.3334, getWidth()*0.3334, getHeight()*0.3334));
+    phaseSlider.setBounds(juce::Rectangle<int>((int)(getWidth()*0.3334), (int)(getHeight()*0.3334), (int)(getWidth()*0.3334), (int)(getHeight()*0.3334)));
 }
 
 void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
@@ -363,7 +363,6 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
                 double lower = m_freq_bin[i].slider.getValue();
                 double upper = 22050.0 - m_freq_bin[i].slider.getValue();
                 double max = (upper < lower) ? upper : lower;
-                double min = 0.0;
                 double mean;
                 if (m_freq_bin[i].range.getValue() > max)
                 {
@@ -373,10 +372,10 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
                 {
                     mean = m_freq_bin[i].range.getValue();
                 }
-                m_freq_bin[i].range.setRange(-20100, 20100);
+                m_freq_bin[i].range.setRange(-max, max);
                 m_freq_bin[i].range.setValue(mean, NotificationType::sendNotification);
-                int lower_bound = (int)-20100;
-                int upper_bound = (int)20100;
+                int lower_bound = (int)-max;
+                int upper_bound = (int)max;
                 std::string label_str = std::to_string(lower_bound) + " - " + std::to_string(upper_bound) + " Hz";
                 m_freq_bin[i].range_label.setText(label_str, NotificationType::sendNotification);
                 break;

@@ -331,7 +331,7 @@ void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size, ui
 
                 slider_pos = ((float)frequency - _slider->slider_min) / (_slider->slider_max - _slider->slider_min);
                 slider_scaled = (slider_pos * (2 * _slider->range)) - _slider->range;
-                final_frequency = m_bin_to_freq[_slider->output_bin] + (int)slider_scaled;
+                final_frequency = (int)m_bin_to_freq[_slider->output_bin] + (int)slider_scaled;
                 if (final_frequency >= FREQUENCY_MAX)
                     final_frequency = FREQUENCY_MAX - 1;
                 final_bin = m_freq_to_bin[final_frequency];
