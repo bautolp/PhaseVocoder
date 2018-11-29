@@ -145,8 +145,9 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupRange(uint32_t slider_idx)
     float slider_pos = (float)slider_idx * 0.10f + 0.10f;
     addAndMakeVisible(m_freq_bin[slider_idx].range);
     m_freq_bin[slider_idx].range.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    m_freq_bin[slider_idx].range.setRange(-2000.0f, 18100.0f);
-    m_freq_bin[slider_idx].range.setSkewFactorFromMidPoint(0.0f);
+    m_freq_bin[slider_idx].range.setRange(-20100.0f, 20100.0f);
+    m_freq_bin[slider_idx].range.setSkewFactor(0.5f,true);
+
     m_freq_bin[slider_idx].range.setValue(m_freq_bin[slider_idx].range.getMaximum());
     m_freq_bin[slider_idx].range.setBounds((int)((float)getWidth() * 0.56f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.4f), (int)((float)getHeight() * 0.06125f));
@@ -259,6 +260,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
         case 6:
             PhaseVocoder::change_type(ProcessType::BinShift);
 			m_background_image = ImageCache::getFromMemory(Images::background2_jpg, Images::background2_jpgSize);
+			//processor.
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(true);
             m_pitch_shift.setVisible(false);
@@ -347,7 +349,7 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
                 double desired = (double)mid * m_master_bin_shift.getValue();
                 m_freq_bin[i].slider.setValue(desired);
                 
-                m_freq_bin[i].range.setValue(desired);
+                m_freq_bin[i].range.setValue(desired/3);
             }
         }
     }
@@ -371,10 +373,10 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
                 {
                     mean = m_freq_bin[i].range.getValue();
                 }
-                m_freq_bin[i].range.setRange(min, max);
+                m_freq_bin[i].range.setRange(-20100, 20100);
                 m_freq_bin[i].range.setValue(mean, NotificationType::sendNotification);
-                int lower_bound = (int)min;
-                int upper_bound = (int)max;
+                int lower_bound = (int)-20100;
+                int upper_bound = (int)20100;
                 std::string label_str = std::to_string(lower_bound) + " - " + std::to_string(upper_bound) + " Hz";
                 m_freq_bin[i].range_label.setText(label_str, NotificationType::sendNotification);
                 break;
