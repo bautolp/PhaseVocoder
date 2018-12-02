@@ -573,7 +573,7 @@ void PhaseVocoder::ProcessSegment(float* input_buffer, dsp::Complex<float> * out
     static float last_hop[2] = { 0.0f, 0.0f };
 
     ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size / 2, m_hop_size, channel, last_hop[channel], 0.0f);
-    ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size, 0, channel, last_hop[channel], 1.0f);
+    ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size, 0, channel, 0.0f, 1.0f);
     if (segment_size > HOP_SIZE)
     {
         last_hop[channel] = 1.0f;
