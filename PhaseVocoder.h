@@ -60,6 +60,7 @@ public:
     static uint32_t m_bin_ratio[FFT_SIZE];
     static void change_effect(const float new_value);
     static void change_pitch(const float new_value);
+    static float m_frequency_bin_size;
     static ProcessType m_type;
     static void change_type(const ProcessType new_type);
     static void change_slider_val(const float new_value, const uint32_t slider_idx);
@@ -75,6 +76,7 @@ private:
     float m_prev_phase[THREAD_COUNT][FFT_SIZE];
     float m_appl_phase[THREAD_COUNT][FFT_SIZE];
     float m_phase_incr[FFT_SIZE];
+    float m_mean_phase_incr[FFT_SIZE];
     uint32_t m_freq_to_bin[FREQUENCY_MAX];
     uint32_t m_buffer_size[2] = { 0, 0 };
     uint32_t m_buffer_size_online[2] = { 0, 0 };
@@ -92,21 +94,31 @@ private:
     float m_output_buffer[THREAD_COUNT][BUFFER_SIZE];
 
     void ProcessSegment(float* input_buffer, dsp::Complex<float> * output_buffer, uint32_t segment_size, uint32_t channel);
-    void ApplyProcessing(float* input, dsp::Complex<float>* intermed_fw, dsp::Complex<float>* intermed_rv, dsp::Complex<float>* output, uint32_t count, uint32_t window_start, uint32_t channel);
+    void ApplyProcessing(float* input, dsp::Complex<float>* intermed_fw, dsp::Complex<float>* intermed_rv, dsp::Complex<float>* output, uint32_t count, uint32_t window_start, uint32_t channel, float last_hop, float curr_hop);
     void ApplyWindowFunction(float* input, dsp::Complex<float>* output, uint32_t count, uint32_t window_start);
     void GenerateWindowFunction();
     void ApplyCircularShift(const float* input, float* output, uint32_t segment_size);
 	void ApplyCircularShift(const dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t segment_size);
 
-    void Process(dsp::Complex<float> * time_domain_input, dsp::Complex<float> * frequency_domain, dsp::Complex<float> * time_domain_output, uint32_t fft_size, ProcessType type, uint32_t channel);
+    void Process(dsp::Complex<float> * time_domain_input, dsp::Complex<float> * frequency_domain, dsp::Complex<float> * time_domain_output, uint32_t fft_size, ProcessType type, uint32_t channel, float last_hop, float curr_hop);
     void PhaseLock();
     void WriteWindow(dsp::Complex<float>* input, dsp::Complex<float>* output, uint32_t count);
     void Whisperization(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void Robotization(dsp::Complex<float> * fft_data, uint32_t fft_size);
     void PitchShift(dsp::Complex<float> * fft_data, uint32_t fft_size, uint32_t channel);
     void BinShift(dsp::Complex<float> * fft_data, uint32_t fft_size, uint32_t channel);
+    void FreqShift(dsp::Complex<float> * fft_data, uint32_t fft_size, uint32_t channel, float last_hop, float curr_hop);
     void Phaser(dsp::Complex<float> * fft_data, uint32_t fft_size);
     inline uint32_t GetSlider(uint32_t frequency_input);
     inline void PerformFFT(dsp::Complex<float>* input, dsp::Complex<float>* output, bool inverse);
+    float n_previous_bin_phase[THREAD_COUNT][FFT_SIZE];
+    float n_current_bin_phase[THREAD_COUNT][FFT_SIZE];
+    float n_phase_difference[THREAD_COUNT][FFT_SIZE];
+    float n_bin_to_mean_freq[FFT_SIZE];
+    float n_bin_to_norm_mean_freq[FFT_SIZE];
+    float n_bin_to_norm_phase_diff[FFT_SIZE];
+    float n_freq_to_phase_inc[FREQUENCY_MAX];
+    float n_prev_out_phase[THREAD_COUNT][FFT_SIZE];
+    float n_mean_phase_inc[FFT_SIZE];
 };
 

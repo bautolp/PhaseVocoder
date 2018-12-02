@@ -70,7 +70,7 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
     m_phase_vocoder_type.addItem("Whisperization", 2);
     m_phase_vocoder_type.addItem("Pitch Shift", 3);
     m_phase_vocoder_type.addItem("Phaser", 4);
-    m_phase_vocoder_type.addItem("Bin Shift", 6);
+    m_phase_vocoder_type.addItem("Frequency Map", 6);
     m_phase_vocoder_type.addItem("Debug", 5);
     m_phase_vocoder_type.addListener(this);
     m_phase_vocoder_type.setSelectedId(1);
@@ -252,10 +252,10 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             PhaseVocoder::change_type(ProcessType::NoneDebug);
 			m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
             phaseSlider.setVisible(false);
-            SetFrequencyBinVisibility(false);
+            SetFrequencyBinVisibility(true);
             m_pitch_shift.setVisible(false);
-            m_set_all_ranges.setToggleState(false, NotificationType::sendNotification);
-            m_set_all_bins.setToggleState(false, NotificationType::sendNotification);
+            m_set_all_ranges.setToggleState(true, NotificationType::sendNotification);
+            m_set_all_bins.setToggleState(true, NotificationType::sendNotification);
             break;
         case 6:
             PhaseVocoder::change_type(ProcessType::BinShift);

@@ -14,6 +14,7 @@ PhaseVocoder::PhaseVocoder() :
         m_forward_fft(FFT_ORDER), m_reverse_fft(FFT_ORDER)
 {
     m_pitch_ratio = 2.0f;
+    m_frequency_bin_size = FREQUENCY_MAX / (FFT_SIZE / 2);
     for (uint32_t i = 0; i < SLIDER_COUNT; i++)
     {
         if (i == 0)
@@ -43,16 +44,41 @@ PhaseVocoder::PhaseVocoder() :
     for (uint32_t i = 0; i < FFT_SIZE; i++)
     {
         m_bin_ratio[i] = i;
-        //if (i <= FFT_SIZE / 2)
-            bin_frequency = (uint32_t)((float)i * SAMPLE_RATE / (float)(FFT_SIZE));
-        //else
-        //    bin_frequency = (uint32_t)((float)(FFT_SIZE - i) * SAMPLE_RATE / (float)FFT_SIZE);
+        bin_frequency = (uint32_t)((float)i * SAMPLE_RATE / (float)(FFT_SIZE));
+        if (i <= FFT_SIZE / 2)
+        {
+            n_bin_to_mean_freq[i] = m_frequency_bin_size * (float)i;
+            n_mean_phase_inc[i] = n_bin_to_mean_freq[i] * HOP_SIZE;
+            normalized_freq = 2.0f * (float)M_PI * n_bin_to_mean_freq[i] / (float)SAMPLE_RATE;
+            n_bin_to_norm_mean_freq[i] = normalized_freq;
+            n_bin_to_norm_phase_diff[i] = n_bin_to_norm_mean_freq[i] * HOP_SIZE;
+        }
+        else
+        {
+            n_bin_to_mean_freq[i] = m_frequency_bin_size * (float)(FFT_SIZE - i);
+            normalized_freq = 2.0f * (float)M_PI * n_bin_to_mean_freq[i] / (float)SAMPLE_RATE;
+            n_bin_to_norm_mean_freq[i] = normalized_freq;
+            n_bin_to_norm_phase_diff[i] = n_bin_to_norm_mean_freq[i] * HOP_SIZE;
+        }
+        n_previous_bin_phase[0][i] = 0.0f;
+        n_current_bin_phase[0][i] = 0.0f;
+        n_phase_difference[0][i] = 0.0f;
+        n_previous_bin_phase[1][i] = 0.0f;
+        n_current_bin_phase[1][i] = 0.0f;
+        n_phase_difference[1][i] = 0.0f;
+        n_prev_out_phase[0][i] = 0.0f;
+        n_prev_out_phase[1][i] = 0.0f;
         m_bin_to_freq[i] = bin_frequency;
         m_bin_to_slider[i] = GetSlider(bin_frequency);
         m_prev_phase[0][i] = 0.0f;
         m_prev_phase[1][i] = 0.0f;
         normalized_freq = 2.0f * (float)M_PI * i / FFT_SIZE;
         m_phase_incr[i] = (float)(HOP_SIZE) * (float)normalized_freq;
+        if (i <= FFT_SIZE / 2)
+            m_mean_phase_incr[i] = (float)(HOP_SIZE) * (2.0f * (float)M_PI * i / FFT_SIZE);
+        else
+            m_mean_phase_incr[i] = (float)(HOP_SIZE) * (2.0f * (float)M_PI * (FFT_SIZE - i) / FFT_SIZE);
+
     }
     GenerateWindowFunction();
     for (uint32_t i = 0; i < THREAD_COUNT; i++)
@@ -113,7 +139,7 @@ void PhaseVocoder::PhaseLock()
 
 }
 
-void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float> * frequency_domain, dsp::Complex<float> * time_domain_output, uint32_t fft_size, ProcessType type, uint32_t channel)
+void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float> * frequency_domain, dsp::Complex<float> * time_domain_output, uint32_t fft_size, ProcessType type, uint32_t channel, float last_hop, float curr_hop)
 {
     // Consider allocating F domain buffer here?
     switch (type)
@@ -184,6 +210,7 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
         break;
     case ProcessType::NoneDebug:
         PerformFFT(time_domain, frequency_domain, false);
+        FreqShift(frequency_domain, fft_size, channel, last_hop, curr_hop);
         PerformFFT(frequency_domain, time_domain_output, true);
         break;
     case ProcessType::BinShift:
@@ -247,7 +274,7 @@ void PhaseVocoder::change_type(const ProcessType new_type)
 void PhaseVocoder::change_slider_val(const float new_value, const uint32_t slider_idx)
 {
     m_sliders[slider_idx].mean = new_value;
-    m_sliders[slider_idx].output_bin = (uint32_t)floorf(new_value * (float)FFT_SIZE / SAMPLE_RATE);
+    m_sliders[slider_idx].output_bin = (uint32_t)(new_value / m_frequency_bin_size);
 }
 
 void PhaseVocoder::change_range_val(const float new_value, const uint32_t slider_idx)
@@ -360,6 +387,75 @@ void PhaseVocoder::BinShift(dsp::Complex<float>* fft_data, uint32_t fft_size, ui
         
         fft_data[bin].real(magnitude * cosf(m_appl_phase[channel][bin]));
         fft_data[bin].imag(magnitude * sinf(m_appl_phase[channel][bin]));
+    }
+}
+
+void PhaseVocoder::FreqShift(dsp::Complex<float>* fft_data, uint32_t fft_size, uint32_t channel, float last_hop, float curr_hop)
+{
+    dsp::Complex<float> temp[FFT_SIZE];
+    float bin_mean_frequency;
+    float slider_pos;
+    float slider_scaled;
+    float expected_phase_diff;
+    float delta_phase_change;
+    uint32_t bin_final_frequency;
+    uint32_t bin_actual_frequency;
+    uint32_t final_bin;
+    float delta_frequency;
+    slider_info * _slider;
+
+    float magnitude;
+    for (uint32_t bin = 0; bin < fft_size / 2; bin++)
+    {
+        _slider = &m_sliders[m_bin_to_slider[bin]];
+        if (_slider->enable)
+        {
+            if (_slider->range_enable)
+            {
+                bin_mean_frequency = n_bin_to_mean_freq[bin];
+                n_current_bin_phase[channel][bin] = arg(fft_data[bin]);
+                n_phase_difference[channel][bin] = princarg(n_current_bin_phase[channel][bin] - n_previous_bin_phase[channel][bin]);
+                if (last_hop < 0.5f)
+                {
+                    expected_phase_diff = 0.0f;
+                }
+                else
+                {
+                    expected_phase_diff = n_mean_phase_inc[bin];
+                }
+                delta_phase_change = princarg(n_phase_difference[channel][bin] - expected_phase_diff);
+                delta_frequency = delta_phase_change * m_frequency_bin_size;
+                bin_actual_frequency = (uint32_t)(bin_mean_frequency + delta_frequency); 
+                
+                slider_pos = ((float)bin_actual_frequency - _slider->slider_min) / (_slider->slider_max - _slider->slider_min);
+                slider_scaled = (slider_pos * (2 * _slider->range)) - _slider->range;
+                
+                //bin_final_frequency = (int)n_bin_to_mean_freq[_slider->output_bin] + (int)slider_scaled;
+                bin_final_frequency = (int)_slider->mean + (int)slider_scaled;
+                if (bin_final_frequency >= FREQUENCY_MAX)
+                    bin_final_frequency = FREQUENCY_MAX - 1;
+                n_previous_bin_phase[channel][bin] = n_current_bin_phase[channel][bin];
+                final_bin = (uint32_t)((float)bin_final_frequency / m_frequency_bin_size);
+                temp[final_bin] += fft_data[bin];
+            }
+            else
+            {
+                temp[_slider->output_bin] += fft_data[bin];
+            }
+        }
+        else
+        {
+            temp[bin] += fft_data[bin];
+        }
+    }
+
+    for (uint32_t i = 0; i < FFT_SIZE; i++)
+    {
+        magnitude = abs(temp[i]);
+
+        fft_data[i].real(magnitude * cos(n_prev_out_phase[channel][i]));
+        fft_data[i].imag(magnitude * sin(n_prev_out_phase[channel][i]));
+        n_prev_out_phase[channel][i] = princarg(n_prev_out_phase[channel][i] + curr_hop *  n_mean_phase_inc[i]);
     }
 }
 
@@ -487,6 +583,10 @@ void PhaseVocoder::DSP(float* input, float* output, uint32_t buff_size, uint32_t
 
 void PhaseVocoder::ProcessSegment(float* input_buffer, dsp::Complex<float> * output_buffer, uint32_t segment_size, uint32_t channel)
 {
+    ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size / 2, m_hop_size, channel, 1.0f, 0.0f);
+    ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size, 0, channel, 0.0f, 1.0f);
+    ApplyProcessing(input_buffer + m_hop_size, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer + m_hop_size, m_window_size / 2, 0, channel, 1.0f, 1.0f);
+    /*
     for (uint32_t i = m_hop_size; i < m_window_size; i += m_hop_size)
     {
         ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size - i, i, channel);
@@ -495,7 +595,7 @@ void PhaseVocoder::ProcessSegment(float* input_buffer, dsp::Complex<float> * out
     for (uint32_t i = 0; i < segment_size; i += m_hop_size)
     {
         ApplyProcessing(input_buffer + i, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer + i, m_window_size, 0, channel);
-    }
+    }*/
 }
 
 void PhaseVocoder::ApplyProcessing( float* input,
@@ -504,16 +604,16 @@ void PhaseVocoder::ApplyProcessing( float* input,
                                     dsp::Complex<float>* output,
                                     uint32_t count,
                                     uint32_t window_start, 
-                                    uint32_t channel)
+                                    uint32_t channel, float last_hop, float curr_hop)
 {
     dsp::Complex<float> buff[FFT_SIZE * 2];
 	dsp::Complex<float> shift_buff[FFT_SIZE * 2];
 
     ApplyWindowFunction(input, buff, count, window_start);
-    ApplyCircularShift(buff, shift_buff, count);
+    //ApplyCircularShift(buff, shift_buff, count);
 
-    Process(shift_buff, intermed_fw, intermed_rv, FFT_SIZE, m_type, channel);
+    Process(buff, intermed_fw, intermed_rv, FFT_SIZE, m_type, channel, last_hop, curr_hop);
 
-    ApplyCircularShift(intermed_rv, shift_buff, count);
-    WriteWindow(shift_buff, output, count);
+    //ApplyCircularShift(intermed_rv, shift_buff, count);
+    WriteWindow(intermed_rv, output, count);
 }

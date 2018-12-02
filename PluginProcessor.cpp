@@ -19,7 +19,7 @@ ProcessType PhaseVocoder::m_type;
 float PhaseVocoder::m_pitch_ratio;
 uint32_t PhaseVocoder::m_bin_ratio[FFT_SIZE];
 PhaseVocoder::slider_info PhaseVocoder::m_sliders[SLIDER_COUNT];
-
+float PhaseVocoder::m_frequency_bin_size;
 //==============================================================================
 PhaseVocoderPluginAudioProcessor::PhaseVocoderPluginAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
