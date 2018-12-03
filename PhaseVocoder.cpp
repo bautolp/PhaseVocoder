@@ -209,9 +209,30 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
         PerformFFT(frequency_domain, time_domain_output, true);
         break;
     case ProcessType::NoneDebug:
+    {
+        float max = 0.0f;
+        for (uint32_t i = 0; i < fft_size; i++)
+        {
+            if (time_domain[i].real() > max)
+                max = time_domain[i].real();
+        }
+
         PerformFFT(time_domain, frequency_domain, false);
         FreqShift(frequency_domain, fft_size, channel, last_hop, curr_hop);
         PerformFFT(frequency_domain, time_domain_output, true);
+
+        float new_max = 0.0f;
+        for (uint32_t i = 0; i < fft_size; i++)
+        {
+            if (time_domain_output[i].real() > new_max)
+                new_max = time_domain_output[i].real();
+        }
+        float factor = max / new_max;
+        for (uint32_t i = 0; i < fft_size; i++)
+        {
+            time_domain_output[i].real(time_domain_output[i].real() * factor);
+        }
+    }
         break;
     case ProcessType::BinShift:
         PerformFFT(time_domain, frequency_domain, false);
@@ -400,12 +421,12 @@ void PhaseVocoder::FreqShift(dsp::Complex<float>* fft_data, uint32_t fft_size, u
     float delta_phase_change;
     uint32_t bin_final_frequency;
     uint32_t bin_actual_frequency;
-    uint32_t final_bin;
+    int final_bin;
     float delta_frequency;
     slider_info * _slider;
 
     float magnitude;
-    for (uint32_t bin = 0; bin < fft_size / 2; bin++)
+    for (uint32_t bin = 0; bin <= fft_size / 2; bin++)
     {
         _slider = &m_sliders[m_bin_to_slider[bin]];
         if (_slider->enable)
@@ -413,28 +434,20 @@ void PhaseVocoder::FreqShift(dsp::Complex<float>* fft_data, uint32_t fft_size, u
             if (_slider->range_enable)
             {
                 bin_mean_frequency = n_bin_to_mean_freq[bin];
-                n_current_bin_phase[channel][bin] = arg(fft_data[bin]);
-                n_phase_difference[channel][bin] = princarg(n_current_bin_phase[channel][bin] - n_previous_bin_phase[channel][bin]);
-                if (last_hop < 0.5f)
-                {
-                    expected_phase_diff = 0.0f;
-                }
-                else
-                {
-                    expected_phase_diff = n_mean_phase_inc[bin];
-                }
-                delta_phase_change = princarg(n_phase_difference[channel][bin] - expected_phase_diff);
-                delta_frequency = delta_phase_change * m_frequency_bin_size;
-                bin_actual_frequency = (uint32_t)(bin_mean_frequency + delta_frequency); 
+
                 
-                slider_pos = ((float)bin_actual_frequency - _slider->slider_min) / (_slider->slider_max - _slider->slider_min);
+                slider_pos = ((float)bin_mean_frequency - _slider->slider_min) / (_slider->slider_max - _slider->slider_min);
                 slider_scaled = (slider_pos * (2 * _slider->range)) - _slider->range;
                 
                 bin_final_frequency = (int)_slider->mean + (int)slider_scaled;
                 if (bin_final_frequency >= FREQUENCY_MAX)
                     bin_final_frequency = FREQUENCY_MAX - 1;
-                n_previous_bin_phase[channel][bin] = n_current_bin_phase[channel][bin];
-                final_bin = (uint32_t)((float)bin_final_frequency / m_frequency_bin_size);
+
+                final_bin = (int)((float)bin_final_frequency / m_frequency_bin_size);
+                if (final_bin < 0)
+                    final_bin = 0;
+                else if (final_bin > FFT_SIZE / 2)
+                    final_bin = FFT_SIZE / 2;
                 temp[final_bin] += fft_data[bin];
             }
             else
