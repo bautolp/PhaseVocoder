@@ -44,7 +44,7 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
     m_master_bin_shift.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     m_master_bin_shift.setRange(0.1f, 10.0f);
     m_master_bin_shift.setSkewFactorFromMidPoint(1.0f);
-    m_master_bin_shift.setValue(2.0f);
+    m_master_bin_shift.setValue(1.0f);
     m_master_bin_shift.setBounds((int)((float)getWidth() * 0.35625f), (int)(0.025f * getHeight()),
         (int)((float)getWidth() * 0.25f), (int)((float)getHeight() * 0.06125f));
     m_master_bin_shift.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
@@ -71,7 +71,7 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
     m_phase_vocoder_type.addItem("Pitch Shift", 3);
     m_phase_vocoder_type.addItem("Phaser", 4);
     m_phase_vocoder_type.addItem("Frequency Map", 6);
-    m_phase_vocoder_type.addItem("Debug", 5);
+    m_phase_vocoder_type.addItem("Freueqncy Map 2.0", 5);
     m_phase_vocoder_type.addListener(this);
     m_phase_vocoder_type.setSelectedId(1);
     m_phase_vocoder_type.setBounds((int)(0.025f * getWidth()), (int)(0.025f*getHeight()), (int)(getWidth()*0.2f), 20);
@@ -109,7 +109,7 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupSlider(uint32_t slider_idx)
     m_freq_bin[slider_idx].slider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     m_freq_bin[slider_idx].slider.setRange(0.0f, 22050.0f);
     m_freq_bin[slider_idx].slider.setSkewFactorFromMidPoint(2000.0f);
-    m_freq_bin[slider_idx].slider.setValue(desired);
+    m_freq_bin[slider_idx].slider.setValue((low + hi)/2);
     m_freq_bin[slider_idx].slider.setBounds((int)((float)getWidth() * 0.033f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.5f), (int)((float)getHeight() * 0.06125f));
 	m_freq_bin[slider_idx].slider.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
@@ -250,7 +250,7 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
             break;
         case 5:
             PhaseVocoder::change_type(ProcessType::NoneDebug);
-			m_background_image = ImageCache::getFromMemory(Images::background3_jpg, Images::background3_jpgSize);
+            m_background_image = ImageCache::getFromMemory(Images::background2_jpg, Images::background2_jpgSize);
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(true);
             m_pitch_shift.setVisible(false);
@@ -260,7 +260,6 @@ void PhaseVocoderPluginAudioProcessorEditor::comboBoxChanged(ComboBox* comboBoxT
         case 6:
             PhaseVocoder::change_type(ProcessType::BinShift);
 			m_background_image = ImageCache::getFromMemory(Images::background2_jpg, Images::background2_jpgSize);
-			//processor.
             phaseSlider.setVisible(false);
             SetFrequencyBinVisibility(true);
             m_pitch_shift.setVisible(false);
