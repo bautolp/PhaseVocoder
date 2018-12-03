@@ -210,28 +210,9 @@ void PhaseVocoder::Process(dsp::Complex<float> * time_domain, dsp::Complex<float
         break;
     case ProcessType::NoneDebug:
     {
-        float max = 0.0f;
-        for (uint32_t i = 0; i < fft_size; i++)
-        {
-            if (time_domain[i].real() > max)
-                max = time_domain[i].real();
-        }
-
         PerformFFT(time_domain, frequency_domain, false);
         FreqShift(frequency_domain, fft_size, channel, last_hop, curr_hop);
         PerformFFT(frequency_domain, time_domain_output, true);
-
-        float new_max = 0.0f;
-        for (uint32_t i = 0; i < fft_size; i++)
-        {
-            if (time_domain_output[i].real() > new_max)
-                new_max = time_domain_output[i].real();
-        }
-        float factor = max / new_max;
-        for (uint32_t i = 0; i < fft_size; i++)
-        {
-            time_domain_output[i].real(time_domain_output[i].real() * factor);
-        }
     }
         break;
     case ProcessType::BinShift:
@@ -434,19 +415,11 @@ void PhaseVocoder::FreqShift(dsp::Complex<float>* fft_data, uint32_t fft_size, u
             if (_slider->range_enable)
             {
                 bin_mean_frequency = n_bin_to_mean_freq[bin];
-
-                
                 slider_pos = ((float)bin_mean_frequency - _slider->slider_min) / (_slider->slider_max - _slider->slider_min);
                 slider_scaled = (slider_pos * (2 * _slider->range)) - _slider->range;
-                
                 bin_final_frequency = (int)_slider->mean + (int)slider_scaled;
-                if (bin_final_frequency >= FREQUENCY_MAX)
-                    bin_final_frequency = FREQUENCY_MAX - 1;
-
                 final_bin = (int)((float)bin_final_frequency / m_frequency_bin_size);
-                if (final_bin < 0)
-                    final_bin = 0;
-                else if (final_bin > FFT_SIZE / 2)
+                if (final_bin > FFT_SIZE / 2)
                     final_bin = FFT_SIZE / 2;
                 temp[final_bin] += fft_data[bin];
             }
