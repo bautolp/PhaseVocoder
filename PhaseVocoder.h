@@ -25,11 +25,11 @@ enum ProcessType
 #define FFT_ORDER 11
 #define FFT_SIZE (1 << FFT_ORDER)
 #define WINDOW_SIZE FFT_SIZE
-#define HOP_SIZE FFT_SIZE/2
+#define HOP_SIZE (FFT_SIZE/2)
 #define SCALING_FACTOR (WINDOW_SIZE / (HOP_SIZE*2))
 
 #define THREAD_COUNT 2
-#define BUFFER_SIZE FFT_SIZE * 2
+#define BUFFER_SIZE (FFT_SIZE * 2)
 
 #define SLIDER_COUNT 9
 

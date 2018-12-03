@@ -450,22 +450,41 @@ void PhaseVocoder::FreqShift(dsp::Complex<float>* fft_data, uint32_t fft_size, u
     }
 
     float phase_incr;
+    float curr = 0.0f;
+    static float prev = 0.0f;
+    float diff = 0.0f;
+    uint32_t foo = 0;
+    float time_change;
+    float bin_frequency;
+    uint32_t bin;
     for (uint32_t i = 0; i < FFT_SIZE; i++)
     {
+        if (i == 10)
+        {
+            curr = arg(temp[i]);
+            diff = curr - prev;
+            if (diff > 1.0f)
+                foo++;
+            prev = curr;
+        }
         magnitude = abs(temp[i]);
         if (i < FFT_SIZE)
         {
-            phase_incr = 2.0f * (float)M_PI * (float)i / (float)FFT_SIZE;
+            bin = i;
         }
         else
         {
-            phase_incr = 2.0f * (float)M_PI * (float)(FFT_SIZE - i) / (float)FFT_SIZE;
+            bin = FFT_SIZE - i;
         }
+        time_change = (float)m_hop_size / (float)SAMPLE_RATE;
+        bin_frequency = bin * m_frequency_bin_size;
+        phase_incr = bin_frequency * time_change;
         n_prev_out_phase[channel][i] = princarg(n_prev_out_phase[channel][i] + last_hop * phase_incr);
 
         fft_data[i].real(magnitude * cos(n_prev_out_phase[channel][i]));
         fft_data[i].imag(magnitude * sin(n_prev_out_phase[channel][i]));
     }
+    std::cout << foo << diff;
 }
 
 void PhaseVocoder::Phaser(dsp::Complex<float>* fft_data, uint32_t fft_size)
@@ -538,7 +557,7 @@ void PhaseVocoder::DSP(float* input, float* output, uint32_t buff_size, uint32_t
         return;
     }
 
-    for (uint32_t j = FFT_SIZE; j < BUFFER_SIZE; j++)
+    for (uint32_t j = 0; j < BUFFER_SIZE; j++)
     {
         m_output_buffer[channel][j] = 0.0f;
     }
@@ -546,7 +565,7 @@ void PhaseVocoder::DSP(float* input, float* output, uint32_t buff_size, uint32_t
     // Loop through segments
     for (uint32_t i = 0; i < buff_size; i += FFT_SIZE)
     {
-        uint32_t remaining = (buff_size < (i + FFT_SIZE) ? buff_size : FFT_SIZE);
+        uint32_t remaining = (buff_size <= (i + FFT_SIZE) ? buff_size : FFT_SIZE);
         for (uint32_t j = 0; j < remaining; j++)
         {
 
@@ -580,18 +599,27 @@ void PhaseVocoder::DSP(float* input, float* output, uint32_t buff_size, uint32_t
 void PhaseVocoder::ProcessSegment(float* input_buffer, dsp::Complex<float> * output_buffer, uint32_t segment_size, uint32_t channel)
 {
     static float last_hop[2] = { 0.0f, 0.0f };
-
-    ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size / 2, m_hop_size, channel, last_hop[channel], 0.0f);
+    uint32_t greater = 0;
+    ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size / 2, m_window_size / 2, channel, last_hop[channel], 0.0f);
     ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size, 0, channel, 0.0f, 1.0f);
-    if (segment_size > HOP_SIZE)
+    if (segment_size > m_hop_size)
     {
         last_hop[channel] = 1.0f;
-        ApplyProcessing(input_buffer, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer, m_window_size / 2, 0, channel, last_hop[channel], 1.0f);
-        last_hop[channel] = ((float)segment_size - (float)HOP_SIZE) / (float)HOP_SIZE;
+        ApplyProcessing(input_buffer + m_hop_size, m_complex_intermed_fw[channel], m_complex_intermed_rv[channel], output_buffer + m_hop_size, m_window_size / 2, 0, channel, last_hop[channel], 1.0f);
+        last_hop[channel] = ((float)segment_size - (float)m_hop_size) / (float)m_hop_size;
     }
     else
     {
-        last_hop[channel] = (float)segment_size / (float)HOP_SIZE;
+        last_hop[channel] = (float)segment_size / (float)m_hop_size;
+        if (last_hop[channel] > 0.5)
+        {
+            greater++;
+        }
+        else
+        {
+            greater--;
+        }
+        std::cout << greater;
     }
     /*
     for (uint32_t i = m_hop_size; i < m_window_size; i += m_hop_size)
