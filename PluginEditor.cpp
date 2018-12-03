@@ -60,7 +60,7 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
     m_set_all_bins.addListener(this);
     
     addAndMakeVisible(m_set_all_ranges);
-    m_set_all_ranges.setButtonText("Dynamic Range");
+    m_set_all_ranges.setButtonText("Frequency Range");
     m_set_all_ranges.setBounds((int)((float)getWidth() * 0.75625f), (int)((0.025f)* getHeight()),
         (int)((float)getWidth() * 0.25f), (int)((float)getHeight() * 0.05f));
     m_set_all_ranges.addListener(this);
