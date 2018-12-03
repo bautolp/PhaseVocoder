@@ -449,10 +449,19 @@ void PhaseVocoder::FreqShift(dsp::Complex<float>* fft_data, uint32_t fft_size, u
         }
     }
 
+    float phase_incr;
     for (uint32_t i = 0; i < FFT_SIZE; i++)
     {
         magnitude = abs(temp[i]);
-        n_prev_out_phase[channel][i] = princarg(n_prev_out_phase[channel][i] + last_hop * n_bin_to_mean_freq[i]);
+        if (i < FFT_SIZE)
+        {
+            phase_incr = 2.0f * (float)M_PI * (float)i / (float)FFT_SIZE;
+        }
+        else
+        {
+            phase_incr = 2.0f * (float)M_PI * (float)(FFT_SIZE - i) / (float)FFT_SIZE;
+        }
+        n_prev_out_phase[channel][i] = princarg(n_prev_out_phase[channel][i] + last_hop * phase_incr);
 
         fft_data[i].real(magnitude * cos(n_prev_out_phase[channel][i]));
         fft_data[i].imag(magnitude * sin(n_prev_out_phase[channel][i]));
