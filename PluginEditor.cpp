@@ -71,7 +71,7 @@ PhaseVocoderPluginAudioProcessorEditor::PhaseVocoderPluginAudioProcessorEditor (
     m_phase_vocoder_type.addItem("Pitch Shift", 3);
     m_phase_vocoder_type.addItem("Phaser", 4);
     m_phase_vocoder_type.addItem("Frequency Map", 6);
-    m_phase_vocoder_type.addItem("Freueqncy Map 2.0", 5);
+    m_phase_vocoder_type.addItem("Frequency Map 2.0", 5);
     m_phase_vocoder_type.addListener(this);
     m_phase_vocoder_type.setSelectedId(1);
     m_phase_vocoder_type.setBounds((int)(0.025f * getWidth()), (int)(0.025f*getHeight()), (int)(getWidth()*0.2f), 20);
@@ -103,6 +103,8 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupSlider(uint32_t slider_idx)
     uint32_t low = 55 << slider_idx;
     uint32_t hi = 55 << (slider_idx + 1);
     uint32_t mid = (low + hi) / 2;
+    if (hi > 22050)
+        hi = 22050;
     double desired = (double)mid * m_master_bin_shift.getValue();
     float slider_pos = (float)slider_idx * 0.10f + 0.10f;
     addAndMakeVisible(m_freq_bin[slider_idx].slider);
@@ -142,13 +144,25 @@ void PhaseVocoderPluginAudioProcessorEditor::SetupSlider(uint32_t slider_idx)
 
 void PhaseVocoderPluginAudioProcessorEditor::SetupRange(uint32_t slider_idx)
 {
+    uint32_t low = 55 << slider_idx;
+    uint32_t hi = 55 << (slider_idx + 1);
+    uint32_t range = (hi + low) / 2;
+    if (hi > 22050)
+    {
+        hi = 22050;
+        range = 3985;
+    }
+    else
+    {
+        range = range / 3;
+    }
     float slider_pos = (float)slider_idx * 0.10f + 0.10f;
     addAndMakeVisible(m_freq_bin[slider_idx].range);
     m_freq_bin[slider_idx].range.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     m_freq_bin[slider_idx].range.setRange(-20100.0f, 20100.0f);
     m_freq_bin[slider_idx].range.setSkewFactor(0.5f,true);
 
-    m_freq_bin[slider_idx].range.setValue(m_freq_bin[slider_idx].range.getMaximum());
+    m_freq_bin[slider_idx].range.setValue(range);
     m_freq_bin[slider_idx].range.setBounds((int)((float)getWidth() * 0.56f), (int)(slider_pos * getHeight()),
         (int)((float)getWidth() * 0.4f), (int)((float)getHeight() * 0.06125f));
 	m_freq_bin[slider_idx].range.setColour(Slider::ColourIds::thumbColourId, Colour::fromRGB(0, 0, 0));
@@ -348,7 +362,7 @@ void PhaseVocoderPluginAudioProcessorEditor::sliderValueChanged(Slider *slider)
                 double desired = (double)mid * m_master_bin_shift.getValue();
                 m_freq_bin[i].slider.setValue(desired);
                 
-                m_freq_bin[i].range.setValue(desired/3);
+                m_freq_bin[i].range.setValue(desired / 3);
             }
         }
     }
